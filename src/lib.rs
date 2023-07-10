@@ -1,5 +1,5 @@
 use chrono::NaiveTime;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Project {
@@ -28,12 +28,12 @@ impl Task {
         &self.id
     }
 
-    pub fn get_name(&self) -> &String{
+    pub fn get_name(&self) -> &String {
         &self.name
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 pub struct Entry {
     task_id: u32,
     start_time: NaiveTime,
@@ -52,7 +52,7 @@ impl Entry {
             task_id,
             start_time,
             end_time,
-            notes
+            notes,
         }
     }
 }
@@ -67,7 +67,56 @@ impl EntryList {
         Self { entries: vec![] }
     }
 
+    pub fn get_all(&self) -> &Vec<Entry> {
+        &self.entries
+    }
+
     pub fn add(&mut self, entry: Entry) {
         self.entries.push(entry);
+
+        self.entries.sort_by(|a, b| a.start_time.cmp(&b.start_time));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::*;
+
+    #[test]
+    fn test_entries_sorted_on_add() {
+        let mut entries = EntryList::empty();
+
+        entries.add(Entry::create(
+            1,
+            NaiveTime::from_str("10:00:00").unwrap(),
+            None,
+            "notes".to_string(),
+        ));
+
+        entries.add(Entry::create(
+            2,
+            NaiveTime::from_str("09:00:00").unwrap(),
+            None,
+            "notes".to_string(),
+        ));
+
+        assert_eq!(
+            NaiveTime::from_str("09:00:00").unwrap(),
+            entries.get_all()[0].start_time,
+        );
+
+        entries.add(Entry::create(
+            3,
+            NaiveTime::from_str("08:59:59").unwrap(),
+            None,
+            "notes".to_string(),
+        ));
+
+        assert_eq!(
+            NaiveTime::from_str("08:59:59").unwrap(),
+            entries.get_all()[0].start_time,
+        );
     }
 }
