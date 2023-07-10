@@ -1,19 +1,17 @@
-use std::io::ErrorKind;
 use dialoguer::{console, theme::ColorfulTheme, FuzzySelect, Input, Confirm};
 use chrono::{NaiveTime, NaiveDate, Utc};
 use reqwest::{blocking::Client, header::USER_AGENT};
 use tick_cli::{Project, Task, Entry, EntryList};
+use crate::files;
 
 const BASE_URL: &str = "https://secure.tickspot.com";
 const ORG_ID: &str = "45669";
 const TOKEN: &str = "d115b93153b4f9968214865e96ff7789";
-const BASE_DIR: &str = "/Users/auke/Documents/Tick";
 
 pub fn create_entry() -> std::io::Result<()> {
     let http_client = Client::new();
     let filename = select_date().format("%Y-%m-%d").to_string();
-    let file_path = get_file_path(&filename);
-    let mut entries = get_entries(&file_path);
+    let mut entries: EntryList = files::load_entry_list(&filename).expect("Cannot load entries");
 
     let project = select_project(&http_client).unwrap();
     let task = select_task(&http_client, &project.get_id()).unwrap();
@@ -31,11 +29,8 @@ pub fn create_entry() -> std::io::Result<()> {
         None,
         notes.to_owned(),
     ));
-
-    std::fs::write(
-        file_path,
-        serde_json::to_string_pretty(&entries).expect("Cannot serialize entries"),
-    ).expect("Cannot write to file");
+    
+    files::store_entry_list(entries, &filename).expect("Cannot store entry list");
 
     Ok(())
 }
@@ -129,26 +124,6 @@ fn input_notes() -> Result<String, std::io::Error> {
     Input::with_theme(&ColorfulTheme::default())
         .with_prompt("Input notes")
         .interact()
-}
-
-fn get_file_path(filename: &String) -> String {
-    format!("{}/{}.json", BASE_DIR, filename)
-}
-
-fn get_entries(file_path: &String) -> EntryList {
-    let data = std::fs::read_to_string(&file_path).unwrap_or_else(|error| {
-        if error.kind() == ErrorKind::NotFound {
-            String::new()
-        } else {
-            panic!("Problem opening the file: {:?}", error);
-        }
-    });
-
-    if data.is_empty() {
-        return EntryList::empty();
-    } 
-    
-    return serde_json::from_str(data.as_str()).expect("Unable to parse file to json");
 }
 
 fn confirm_entry(project_name: &str, task_name: &str, start_time: &NaiveTime, notes: &String) -> bool {

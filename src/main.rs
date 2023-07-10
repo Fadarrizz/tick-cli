@@ -5,6 +5,7 @@ type Result<T> = ::std::result::Result<T, Box<dyn Error>>;
 
 mod args;
 mod create;
+mod files;
 
 fn main() {
     if let Err(e) = args::get().and_then(try_main) {
