@@ -5,7 +5,6 @@ type ArgResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
-    List,
     Create,
 }
 

@@ -16,7 +16,6 @@ fn main() {
 
 fn try_main(args: Args) -> Result<()> {
     let matched = match args.command {
-        List => list(),
         Create => create(),
     }?;
 
@@ -25,10 +24,6 @@ fn try_main(args: Args) -> Result<()> {
     } else {
         process::exit(1)
     }
-}
-
-fn list() -> Result<bool> {
-    Ok(true)
 }
 
 fn create() -> Result<bool> {
