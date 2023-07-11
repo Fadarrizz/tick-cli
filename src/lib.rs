@@ -55,6 +55,10 @@ impl Entry {
             notes,
         }
     }
+
+    pub fn set_end_time(&mut self, end_time: NaiveTime) {
+        self.end_time = Some(end_time)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -75,6 +79,19 @@ impl EntryList {
         self.entries.push(entry);
 
         self.entries.sort_by(|a, b| a.start_time.cmp(&b.start_time));
+    }
+
+    pub fn set_end_times(&mut self) {
+        let mut iter = self.entries.iter_mut();
+
+        if let Some(mut current) = iter.next() {
+            for next in iter {
+                let end_time = next.start_time.clone();
+                current.set_end_time(end_time);
+
+                current = next;
+            }
+        }
     }
 }
 
@@ -102,10 +119,7 @@ mod tests {
             "notes".to_string(),
         ));
 
-        assert_eq!(
-            NaiveTime::from_str("09:00:00").unwrap(),
-            entries.get_all()[0].start_time,
-        );
+        assert_eq!(NaiveTime::from_str("09:00:00").unwrap(), entries.get_all()[0].start_time);
 
         entries.add(Entry::create(
             3,
@@ -114,9 +128,34 @@ mod tests {
             "notes".to_string(),
         ));
 
-        assert_eq!(
-            NaiveTime::from_str("08:59:59").unwrap(),
-            entries.get_all()[0].start_time,
-        );
+        assert_eq!(NaiveTime::from_str("08:59:59").unwrap(), entries.get_all()[0].start_time);
+    }
+
+    #[test]
+    fn test_set_entry_end_times() {
+        let mut entries = EntryList::empty();
+
+        entries.add(Entry::create(
+            1,
+            NaiveTime::from_str("10:00:00").unwrap(),
+            None,
+            "notes".to_string(),
+        ));
+
+        entries.add(Entry::create(
+            2,
+            NaiveTime::from_str("09:00:00").unwrap(),
+            None,
+            "notes".to_string(),
+        ));
+
+        assert_eq!(None, entries.get_all()[0].end_time);
+        assert_eq!(None, entries.get_all()[1].end_time);
+
+        entries.set_end_times();
+
+        let expected = Some(NaiveTime::from_str("10:00:00").unwrap());
+        assert_eq!(expected, entries.get_all()[0].end_time);
+        assert_eq!(None, entries.get_all()[1].end_time);
     }
 }
