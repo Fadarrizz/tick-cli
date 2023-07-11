@@ -1,20 +1,15 @@
 use dialoguer::{console, theme::ColorfulTheme, FuzzySelect, Input, Confirm};
 use chrono::{NaiveTime, NaiveDate, Utc};
-use reqwest::{blocking::Client, header::USER_AGENT};
 use tick_cli::{Project, Task, Entry, EntryList};
 use crate::files;
-
-const BASE_URL: &str = "https://secure.tickspot.com";
-const ORG_ID: &str = "45669";
-const TOKEN: &str = "d115b93153b4f9968214865e96ff7789";
+use crate::tick_client;
 
 pub fn create_entry() -> std::io::Result<()> {
-    let http_client = Client::new();
     let filename = select_date().format("%Y-%m-%d").to_string();
     let mut entries: EntryList = files::load_entry_list(&filename).expect("Cannot load entries");
 
-    let project = select_project(&http_client).unwrap();
-    let task = select_task(&http_client, &project.get_id()).unwrap();
+    let project = select_project().unwrap();
+    let task = select_task(&project.get_id()).unwrap();
     let start_time = input_start_time();
     let notes = input_notes().unwrap();
 
@@ -35,15 +30,8 @@ pub fn create_entry() -> std::io::Result<()> {
     Ok(())
 }
 
-fn select_project(http_client: &Client) -> Option<Project> {
-    let projects: Vec<Project> = http_client
-        .get(format!("{}/{}/api/v2/projects.json", BASE_URL, ORG_ID))
-        .bearer_auth(TOKEN)
-        .header(USER_AGENT, "tick-cli (auke@ijsfontein.nl)")
-        .send()
-        .unwrap()
-        .json()
-        .unwrap();
+fn select_project() -> Option<Project> {
+    let projects: Vec<Project> = tick_client::get_projects();
 
     let project_names: Vec<String> = projects.iter().map(|p| p.get_name().clone()).collect();
 
@@ -59,16 +47,8 @@ fn select_project(http_client: &Client) -> Option<Project> {
     }
 }
 
-fn select_task(http_client: &Client, project_id: &u32) -> Option<Task> {
-    let tasks: Vec<Task> = http_client
-        .get(format!(
-            "{}/{}/api/v2/projects/{}/tasks.json",
-            BASE_URL, ORG_ID, project_id
-        ))
-        .bearer_auth(TOKEN)
-        .header(USER_AGENT, "tick-cli (auke@ijsfontein.nl)")
-        .send().expect("Unable to retrieve tasks")
-        .json().expect("Unable to convert task response to json");
+fn select_task(project_id: &u32) -> Option<Task> {
+    let tasks: Vec<Task> = tick_client::get_tasks(project_id);
 
     let task_names: Vec<String> = tasks.iter().map(|t| t.get_name().clone()).collect();
 
