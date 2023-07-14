@@ -1,9 +1,11 @@
 use std::{process, error::Error};
 use args::{Command::*, Args};
 use config::Config;
+use dialoguer::console::style;
 
 type Result<T> = ::std::result::Result<T, Box<dyn Error>>;
 
+mod auth;
 mod config;
 mod args;
 mod create;
@@ -21,7 +23,9 @@ fn try_main(args: Args) -> Result<()> {
     let mut config = config::load()?;
 
     let matched = match args.command {
-        Create => create(),
+        Login => login(&mut config),
+        Logout => logout(&config),
+        Create => create(&config),
     }?;
 
     if matched {
@@ -31,6 +35,23 @@ fn try_main(args: Args) -> Result<()> {
     }
 }
 
-fn create() -> Result<bool> {
+fn login(config: &mut Config) -> Result<bool> {
+    Ok(auth::login(config).is_ok())
+}
+
+fn logout(config: &Config) -> Result<bool> {
+    Ok(auth::logout(config).is_ok())
+}
+
+fn create(config: &Config) -> Result<bool> {
+    check_auth(config);
+
     Ok(create::create_entry().is_ok())
+}
+
+fn check_auth(config: &Config) {
+    if config.missing_api_key() {
+        println!("To get started with Tick CLI, please run {}", style("tick login").bold());
+        process::exit(1)
+    }
 }
