@@ -1,8 +1,10 @@
 use std::{process, error::Error};
 use args::{Command::*, Args};
+use config::Config;
 
 type Result<T> = ::std::result::Result<T, Box<dyn Error>>;
 
+mod config;
 mod args;
 mod create;
 mod files;
@@ -16,6 +18,8 @@ fn main() {
 }
 
 fn try_main(args: Args) -> Result<()> {
+    let mut config = config::load()?;
+
     let matched = match args.command {
         Create => create(),
     }?;

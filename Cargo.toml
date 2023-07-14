@@ -1,6 +1,6 @@
 [package]
 name = "tick-cli"
-author = "Fadarrizz <github.com/Fadarrizz>"
+authors = ["Fadarrizz <github.com/Fadarrizz>"]
 version = "0.1.0"
 edition = "2021"
 
@@ -9,6 +9,7 @@ edition = "2021"
 [dependencies]
 chrono = { version = "0.4.24", features = ["serde"] }
 clap = { version = "4.2.7", features = ["derive"] }
+confy = "0.5.1"
 dialoguer = { version = "0.10.4", features = ["fuzzy-select"] }
 reqwest = { version = "0.11.17", features = ["json", "blocking"] }
 serde = { version = "1.0.162", features = ["derive"] }
