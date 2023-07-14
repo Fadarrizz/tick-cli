@@ -20,7 +20,9 @@ pub fn create_entry(config: &Config) -> std::io::Result<()> {
     }
 
     entries.add(Entry::create(
+        project.get_name().clone(),
         *task.get_id(),
+        task.get_name().clone(),
         start_time,
         None,
         notes.to_owned(),

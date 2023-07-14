@@ -67,7 +67,9 @@ impl Task {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 pub struct Entry {
+    project: String,
     task_id: u32,
+    task_name: String,
     start_time: NaiveTime,
     end_time: Option<NaiveTime>,
     notes: String,
@@ -75,13 +77,17 @@ pub struct Entry {
 
 impl Entry {
     pub fn create(
+        project: String,
         task_id: u32,
+        task_name: String,
         start_time: NaiveTime,
         end_time: Option<NaiveTime>,
         notes: String,
     ) -> Self {
         Self {
+            project,
             task_id,
+            task_name,
             start_time,
             end_time,
             notes,
@@ -138,14 +144,18 @@ mod tests {
         let mut entries = EntryList::empty();
 
         entries.add(Entry::create(
+            "project A".to_string(),
             1,
+            "task 1".to_string(),
             NaiveTime::from_str("10:00:00").unwrap(),
             None,
             "notes".to_string(),
         ));
 
         entries.add(Entry::create(
+            "project B".to_string(),
             2,
+            "task 2".to_string(),
             NaiveTime::from_str("09:00:00").unwrap(),
             None,
             "notes".to_string(),
@@ -154,7 +164,9 @@ mod tests {
         assert_eq!(NaiveTime::from_str("09:00:00").unwrap(), entries.get_all()[0].start_time);
 
         entries.add(Entry::create(
+            "project C".to_string(),
             3,
+            "task 3".to_string(),
             NaiveTime::from_str("08:59:59").unwrap(),
             None,
             "notes".to_string(),
@@ -168,14 +180,18 @@ mod tests {
         let mut entries = EntryList::empty();
 
         entries.add(Entry::create(
+            "project A".to_string(),
             1,
+            "task 1".to_string(),
             NaiveTime::from_str("10:00:00").unwrap(),
             None,
             "notes".to_string(),
         ));
 
         entries.add(Entry::create(
+            "project B".to_string(),
             2,
+            "task 2".to_string(),
             NaiveTime::from_str("09:00:00").unwrap(),
             None,
             "notes".to_string(),
