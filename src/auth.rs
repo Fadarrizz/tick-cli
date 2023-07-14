@@ -36,7 +36,7 @@ pub fn login(config: &mut Config) -> std::io::Result<()> {
 
     let users = api::get_users();
     let first_name = users.first().unwrap().get_first_name();
-    println!("Logged in as {} at {}", style(first_name).bold(), style(role.get_company()).bold());
+    println!("Logged in as {} from {}", style(first_name).bold(), style(role.get_company()).bold());
 
     Ok(())
 }
