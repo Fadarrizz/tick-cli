@@ -1,15 +1,16 @@
 use dialoguer::{console, theme::ColorfulTheme, FuzzySelect, Input, Confirm};
 use chrono::{NaiveTime, NaiveDate, Utc};
 use tick_cli::{Project, Task, Entry, EntryList};
+use crate::config::Config;
 use crate::files;
 use crate::api;
 
-pub fn create_entry() -> std::io::Result<()> {
+pub fn create_entry(config: &Config) -> std::io::Result<()> {
     let filename = select_date().format("%Y-%m-%d").to_string();
     let mut entries: EntryList = files::load_entry_list(&filename).expect("Cannot load entries");
 
-    let project = select_project().unwrap();
-    let task = select_task(&project.get_id()).unwrap();
+    let project = select_project(config).unwrap();
+    let task = select_task(config, &project.get_id()).unwrap();
     let start_time = input_start_time();
     let notes = input_notes().unwrap();
 
@@ -30,8 +31,8 @@ pub fn create_entry() -> std::io::Result<()> {
     Ok(())
 }
 
-fn select_project() -> Option<Project> {
-    let projects: Vec<Project> = api::get_projects();
+fn select_project(config: &Config) -> Option<Project> {
+    let projects: Vec<Project> = api::get_projects(config);
 
     let project_names: Vec<String> = projects.iter().map(|p| p.get_name().clone()).collect();
 
@@ -47,8 +48,8 @@ fn select_project() -> Option<Project> {
     }
 }
 
-fn select_task(project_id: &u32) -> Option<Task> {
-    let tasks: Vec<Task> = api::get_tasks(project_id);
+fn select_task(config: &Config, project_id: &u32) -> Option<Task> {
+    let tasks: Vec<Task> = api::get_tasks(config, project_id);
 
     let task_names: Vec<String> = tasks.iter().map(|t| t.get_name().clone()).collect();
 

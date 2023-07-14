@@ -27,6 +27,14 @@ impl Config {
         self.api_key.is_empty()
     }
 
+    pub fn get_subscription_id(&self) -> &u32 {
+        &self.subscription_id
+    }
+
+    pub fn get_api_key(&self) -> &String {
+        &self.api_key
+    }
+
     pub fn set_subscription_id(&mut self, subscription_id: u32) {
         self.subscription_id = subscription_id;
     }

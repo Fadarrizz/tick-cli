@@ -1,9 +1,9 @@
 use reqwest::{blocking::Client, header};
 use tick_cli::{Role, Project, Task, User};
 
+use crate::config::Config;
+
 const BASE_URL: &str = "https://secure.tickspot.com";
-const ORG_ID: &str = "45669";
-const TOKEN: &str = "d115b93153b4f9968214865e96ff7789";
 const USER_AGENT: &str = "tick-cli (auke@ijsfontein.nl)";
 
 pub struct ApiError {
@@ -44,38 +44,38 @@ pub fn get_roles(email: &String, password: &String) -> Result<Vec<Role>, ApiErro
     }
 }
 
-pub fn get_users() -> Vec<User> {
+pub fn get_users(config: &Config) -> Vec<User> {
     Client::new()
-        .get(format!("{}/{}/api/v2/users.json", BASE_URL, ORG_ID))
-        .bearer_auth(TOKEN)
+        .get(format!("{}/{}/api/v2/users.json", BASE_URL, config.get_subscription_id()))
+        .bearer_auth(config.get_api_key())
         .header(header::USER_AGENT, USER_AGENT)
         .send().unwrap()
         .json().unwrap()
 }
 
-pub fn get_projects() -> Vec<Project> {
+pub fn get_projects(config: &Config) -> Vec<Project> {
     Client::new()
-        .get(format!("{}/{}/api/v2/projects.json", BASE_URL, ORG_ID))
-        .bearer_auth(TOKEN)
+        .get(format!("{}/{}/api/v2/projects.json", BASE_URL, config.get_subscription_id()))
+        .bearer_auth(config.get_api_key())
         .header(header::USER_AGENT, USER_AGENT)
         .send().expect("Unable to retrieve projects")
         .json().expect("Unable to convert project response to json")
 }
 
-pub fn get_tasks(project_id: &u32) -> Vec<Task> {
+pub fn get_tasks(config: &Config, project_id: &u32) -> Vec<Task> {
     Client::new()
-        .get(format!("{}/{}/api/v2/projects/{}/tasks.json", BASE_URL, ORG_ID, project_id))
-        .bearer_auth(TOKEN)
-        .header(USER_AGENT, USER_AGENT)
+        .get(format!("{}/{}/api/v2/projects/{}/tasks.json", BASE_URL, config.get_subscription_id(), project_id))
+        .bearer_auth(config.get_api_key())
+        .header(header::USER_AGENT, USER_AGENT)
         .send().expect("Unable to retrieve tasks")
         .json().expect("Unable to convert task response to json")
 }
 
-pub fn _send_entry() -> reqwest::blocking::Response {
+pub fn _send_entry(config: &Config) -> reqwest::blocking::Response {
     Client::new()
-         .post(format!("{}/{}/api/v2/entries.json", BASE_URL, ORG_ID))
+         .post(format!("{}/{}/api/v2/entries.json", BASE_URL, config.get_subscription_id()))
          // .json(serde_json::to_string(&entry).unwrap())
-         .bearer_auth(TOKEN)
-         .header(USER_AGENT, USER_AGENT)
+         .bearer_auth(config.get_api_key())
+         .header(header::USER_AGENT, USER_AGENT)
          .send().expect("Unable to send entry")
  }

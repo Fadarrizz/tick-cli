@@ -46,7 +46,7 @@ fn logout(config: &Config) -> Result<bool> {
 fn create(config: &Config) -> Result<bool> {
     check_auth(config);
 
-    Ok(create::create_entry().is_ok())
+    Ok(create::create_entry(config).is_ok())
 }
 
 fn check_auth(config: &Config) {
