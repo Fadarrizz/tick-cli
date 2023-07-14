@@ -2,7 +2,7 @@ use dialoguer::{console, theme::ColorfulTheme, FuzzySelect, Input, Confirm};
 use chrono::{NaiveTime, NaiveDate, Utc};
 use tick_cli::{Project, Task, Entry, EntryList};
 use crate::files;
-use crate::tick_client;
+use crate::api;
 
 pub fn create_entry() -> std::io::Result<()> {
     let filename = select_date().format("%Y-%m-%d").to_string();
@@ -31,7 +31,7 @@ pub fn create_entry() -> std::io::Result<()> {
 }
 
 fn select_project() -> Option<Project> {
-    let projects: Vec<Project> = tick_client::get_projects();
+    let projects: Vec<Project> = api::get_projects();
 
     let project_names: Vec<String> = projects.iter().map(|p| p.get_name().clone()).collect();
 
@@ -48,7 +48,7 @@ fn select_project() -> Option<Project> {
 }
 
 fn select_task(project_id: &u32) -> Option<Task> {
-    let tasks: Vec<Task> = tick_client::get_tasks(project_id);
+    let tasks: Vec<Task> = api::get_tasks(project_id);
 
     let task_names: Vec<String> = tasks.iter().map(|t| t.get_name().clone()).collect();
 
