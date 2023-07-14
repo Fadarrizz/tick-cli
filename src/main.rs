@@ -11,6 +11,8 @@ mod args;
 mod create;
 mod files;
 mod api;
+mod input;
+mod list;
 
 fn main() {
     if let Err(e) = args::get().and_then(try_main) {
@@ -26,6 +28,7 @@ fn try_main(args: Args) -> Result<()> {
         Login => login(&mut config),
         Logout => logout(&config),
         Create => create(&config),
+        List => list(&config),
     }?;
 
     if matched {
@@ -47,6 +50,12 @@ fn create(config: &Config) -> Result<bool> {
     check_auth(config);
 
     Ok(create::create_entry(config).is_ok())
+}
+
+fn list(config: &Config) -> Result<bool> {
+    check_auth(config);
+
+    Ok(list::list_entries().is_ok())
 }
 
 fn check_auth(config: &Config) {

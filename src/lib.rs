@@ -1,3 +1,5 @@
+use core::fmt;
+
 use chrono::NaiveTime;
 use serde::{Deserialize, Serialize};
 
@@ -99,6 +101,12 @@ impl Entry {
     }
 }
 
+impl fmt::Display for Entry {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}: {} | {}", self.start_time.format("%H:%M"), self.project, self.notes)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct EntryList {
     entries: Vec<Entry>,
@@ -130,6 +138,15 @@ impl EntryList {
                 current = next;
             }
         }
+    }
+}
+
+impl fmt::Display for EntryList {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for entry in &self.entries {
+            write!(f, "{}\n", entry)?;
+        }
+        Ok(())
     }
 }
 
