@@ -8,7 +8,7 @@ mod config;
 mod args;
 mod create;
 mod files;
-mod tick_client;
+mod api;
 
 fn main() {
     if let Err(e) = args::get().and_then(try_main) {
