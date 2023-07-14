@@ -1,6 +1,38 @@
 use chrono::NaiveTime;
 use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Role {
+    subscription_id: u32,
+    company: String,
+    api_token: String,
+}
+
+impl Role {
+    pub fn get_subscription_id(&self) -> &u32 {
+        &self.subscription_id
+    }
+
+    pub fn get_company(&self) -> &String {
+        &self.company
+    }
+
+    pub fn get_api_token(&self) -> &String {
+        &self.api_token
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct User {
+    first_name: String,
+}
+
+impl User {
+    pub fn get_first_name(&self) -> &String {
+        &self.first_name
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Project {
     id: u32,
