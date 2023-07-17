@@ -1,9 +1,9 @@
-use chrono::{NaiveTime, NaiveDate, Utc};
-use tick_cli::{Project, Task, Entry, EntryList};
+use crate::api;
 use crate::config::Config;
 use crate::files;
-use crate::api;
 use crate::input;
+use chrono::{NaiveDate, NaiveTime, Utc};
+use tick_cli::{Entry, EntryList, Project, Task};
 
 pub fn create_entry(config: &Config) -> std::io::Result<()> {
     let filename = select_date().format("%Y-%m-%d").to_string();
@@ -16,7 +16,7 @@ pub fn create_entry(config: &Config) -> std::io::Result<()> {
 
     // Selecting no means gracefully termination.
     if confirm_entry(&project.get_name(), &task.get_name(), &start_time, &notes) == false {
-        return Ok(())
+        return Ok(());
     }
 
     entries.add(Entry::create(
@@ -27,7 +27,7 @@ pub fn create_entry(config: &Config) -> std::io::Result<()> {
         None,
         notes.to_owned(),
     ));
-    
+
     files::store_entry_list(entries, &filename).expect("Cannot store entry list");
 
     Ok(())
@@ -38,7 +38,7 @@ fn select_project(config: &Config) -> Option<Project> {
 
     let project_names: Vec<String> = projects.iter().map(|p| p.get_name().clone()).collect();
 
-    match input::fuzzy_select("Select a project", &project_names, None) {
+    match input::fuzzy_select("Select a project", &project_names, Some(0)) {
         Some(index) => Some(projects[index].clone()),
         None => panic!("Nothing selected"),
     }
@@ -49,7 +49,7 @@ fn select_task(config: &Config, project_id: &u32) -> Option<Task> {
 
     let task_names: Vec<String> = tasks.iter().map(|t| t.get_name().clone()).collect();
 
-    match input::fuzzy_select("Select a task", &task_names, None) {
+    match input::fuzzy_select("Select a task", &task_names, Some(0)) {
         Some(index) => Some(tasks[index].clone()),
         None => panic!("Nothing selected"),
     }

@@ -4,7 +4,6 @@ use tick_cli::{Entry, EntryList, Project, Task};
 use crate::{api, config::Config, files, input};
 
 pub fn edit_entry(config: &Config) -> std::io::Result<()> {
-
     let filename = select_file().unwrap();
     let mut entries: EntryList = files::load_entry_list(&filename).expect("Cannot load entries");
 
@@ -38,7 +37,7 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
 fn select_file() -> Option<String> {
     let existing_files = files::get_existing_file_names();
 
-    match input::fuzzy_select("Select a file", &existing_files, None) {
+    match input::fuzzy_select("Select a file", &existing_files, Some(0)) {
         Some(index) => Some(existing_files[index].clone()),
         None => panic!("Nothing selected"),
     }
@@ -47,7 +46,7 @@ fn select_file() -> Option<String> {
 fn select_entry(entry_list: &mut EntryList) -> Option<&mut Entry> {
     let entries = entry_list.get_all();
 
-    match input::fuzzy_select("Select an entry", entries, None) {
+    match input::fuzzy_select("Select an entry", entries, Some(0)) {
         Some(index) => Some(entry_list.get_mut(index)),
         None => panic!("Nothing selected"),
     }
