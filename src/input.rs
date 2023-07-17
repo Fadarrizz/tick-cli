@@ -1,55 +1,89 @@
 use chrono::{NaiveDate, NaiveTime};
-use dialoguer::{FuzzySelect, theme::ColorfulTheme, Input, Confirm};
+use dialoguer::{theme::ColorfulTheme, Confirm, FuzzySelect, Input};
 
-pub fn fuzzy_select<T: ToString>(prompt: &str, items: &[T]) -> Option<usize> {
-    Some(FuzzySelect::with_theme(&ColorfulTheme::default())
-        .with_prompt(prompt)
-        .items(items)
-        .interact()
-        .unwrap())
+pub fn fuzzy_select<T: ToString>(
+    prompt: &str,
+    items: &[T],
+    default: Option<usize>,
+) -> Option<usize> {
+    let theme = &ColorfulTheme::default();
+    let mut select = FuzzySelect::with_theme(theme);
+
+    select.with_prompt(prompt).items(items);
+
+    if default.is_some() {
+        select.default(default.unwrap());
+    }
+
+    Some(select.interact().unwrap())
 }
 
-pub fn date(prompt: &str, initial_text: Option<String>) -> Option<String> {
-    Some(Input::with_theme(&ColorfulTheme::default())
+pub fn date(prompt: &str, default: Option<&String>) -> Option<String> {
+    let theme = &ColorfulTheme::default();
+    let mut input = Input::with_theme(theme);
+
+    input
         .with_prompt(prompt)
-        .with_initial_text(initial_text.unwrap())
         .validate_with(|input: &String| -> Result<(), &str> {
             let date = NaiveDate::parse_from_str(&input, "%Y-%m-%d");
             match date {
                 Ok(_date) => Ok(()),
-                Err(_e) => Err("Wrong date format. Please provide a date like 2023-01-30")
+                Err(_e) => Err("Wrong date format. Please provide a date like 2023-01-30"),
             }
-        })
-        .interact()
-        .unwrap())
+        });
+
+    // Use inital text, instead of default so that the user
+    // can change the input easier.
+    if default.is_some() {
+        input.with_initial_text(default.unwrap());
+    }
+
+    Some(input.interact().unwrap())
 }
 
-pub fn time(prompt: &str) -> Option<String> {
-    Some(Input::with_theme(&ColorfulTheme::default())
+pub fn time(prompt: &str, default: Option<&String>) -> Option<String> {
+    let theme = &ColorfulTheme::default();
+    let mut input = Input::with_theme(theme);
+
+    input
         .with_prompt(prompt)
         .validate_with(|input: &String| -> Result<(), &str> {
             let time = NaiveTime::parse_from_str(&input, "%H:%M");
             match time {
                 Ok(_time) => Ok(()),
-                Err(_e) => Err("Wrong time format. Please provide a time like 9:15")
+                Err(_e) => Err("Wrong time format. Please provide a time like 9:15"),
             }
-        })
-        .interact()
-        .unwrap())
+        });
+
+    // Use inital text, instead of default so that the user
+    // can change the input easier.
+    if default.is_some() {
+        input.with_initial_text(default.unwrap());
+    }
+
+    Some(input.interact().unwrap())
 }
 
-pub fn default(prompt: &str) -> Option<String> {
-    Some(Input::with_theme(&ColorfulTheme::default())
-        .with_prompt(prompt)
-        .interact()
-        .unwrap())
+pub fn default(prompt: &str, default: Option<&String>) -> Option<String> {
+    let theme = &ColorfulTheme::default();
+    let mut input = Input::with_theme(theme);
+
+    input.with_prompt(prompt);
+
+    if default.is_some() {
+        input.with_initial_text(default.unwrap());
+    }
+
+    Some(input.interact().unwrap())
 }
 
 pub fn confirm(prompt: &str) -> Option<bool> {
-    Some(Confirm::with_theme(&ColorfulTheme::default())
-        .with_prompt(prompt)
-        .default(true)
-        .wait_for_newline(true)
-        .interact()
-        .unwrap())
+    Some(
+        Confirm::with_theme(&ColorfulTheme::default())
+            .with_prompt(prompt)
+            .default(true)
+            .wait_for_newline(true)
+            .interact()
+            .unwrap(),
+    )
 }
