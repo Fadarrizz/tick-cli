@@ -159,6 +159,10 @@ impl EntryList {
     pub fn add(&mut self, entry: Entry) {
         self.entries.push(entry);
 
+        self.sort();
+    }
+
+    pub fn sort(&mut self) {
         self.entries.sort_by(|a, b| a.start_time.cmp(&b.start_time));
     }
 

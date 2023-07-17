@@ -1,11 +1,11 @@
-use chrono::{NaiveDate, NaiveTime, Utc};
+use chrono::NaiveTime;
 use tick_cli::{Entry, EntryList, Project, Task};
 
 use crate::{api, config::Config, files, input};
 
 pub fn edit_entry(config: &Config) -> std::io::Result<()> {
-    // Choose an existing file, instead of filling out date.
-    let filename = select_date().format("%Y-%m-%d").to_string();
+
+    let filename = select_file().unwrap();
     let mut entries: EntryList = files::load_entry_list(&filename).expect("Cannot load entries");
 
     let entry = select_entry(&mut entries).unwrap();
@@ -28,7 +28,20 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
         notes,
     );
 
+    entries.sort();
+
+    files::store_entry_list(entries, &filename).expect("Cannot store entry list");
+
     Ok(())
+}
+
+fn select_file() -> Option<String> {
+    let existing_files = files::get_existing_file_names();
+
+    match input::fuzzy_select("Select a file", &existing_files, None) {
+        Some(index) => Some(existing_files[index].clone()),
+        None => panic!("Nothing selected"),
+    }
 }
 
 fn select_entry(entry_list: &mut EntryList) -> Option<&mut Entry> {
@@ -62,13 +75,6 @@ fn select_task(config: &Config, project_id: &u32, selected: &String) -> Option<T
         Some(index) => Some(tasks[index].clone()),
         None => panic!("Nothing selected"),
     }
-}
-
-fn select_date() -> NaiveDate {
-    let initial_text = Utc::now().format("%Y-%m-%d").to_string();
-    let date = input::date("Select a date", Some(&initial_text)).unwrap();
-
-    NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap()
 }
 
 fn input_start_time(start_time: &NaiveTime) -> NaiveTime {
