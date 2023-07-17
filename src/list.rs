@@ -1,9 +1,8 @@
-use chrono::{NaiveDate, Utc};
 use tick_cli::EntryList;
 use crate::{files, input};
 
 pub fn list_entries() -> std::io::Result<()> {
-    let filename = select_date().format("%Y-%m-%d").to_string();
+    let filename = select_file().unwrap();
     let entries: EntryList = files::load_entry_list(&filename).expect("Cannot load entries");
 
     print!("{}", entries);
@@ -11,9 +10,11 @@ pub fn list_entries() -> std::io::Result<()> {
     Ok(())
 }
 
-fn select_date() -> NaiveDate {
-    let initial_text = Utc::now().format("%Y-%m-%d").to_string();
-    let date = input::date("Select a date", Some(&initial_text)).unwrap();
+fn select_file() -> Option<String> {
+    let existing_files = files::get_existing_file_names();
 
-    NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap()
+    match input::fuzzy_select("Select a file", &existing_files, Some(0)) {
+        Some(index) => Some(existing_files[index].clone()),
+        None => panic!("Nothing selected"),
+    }
 }
