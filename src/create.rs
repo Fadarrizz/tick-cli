@@ -56,8 +56,8 @@ fn select_task(config: &Config, project_id: &u32) -> Option<Task> {
 }
 
 fn select_date() -> NaiveDate {
-    let initial_text = format!("{}", Utc::now().format("%Y-%m-%d"));
     let date = input::date("Select a date", Some(initial_text)).unwrap();
+    let initial_text = Utc::now().format("%Y-%m-%d").to_string();
 
     NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap()
 }
