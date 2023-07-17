@@ -37,7 +37,7 @@ pub fn store_entry_list(entries: EntryList, filename: &String) -> Result<()> {
 }
 
 pub fn get_existing_file_names() -> Vec<String> {
-    fs::read_dir(get_base_dir())
+    let mut file_names = fs::read_dir(get_base_dir())
         .unwrap()
         .filter_map(|file| {
             file.ok().and_then(|e| {
@@ -46,7 +46,11 @@ pub fn get_existing_file_names() -> Vec<String> {
                     .and_then(|s| s.to_str().map(|s| String::from(s)))
             })
         })
-        .collect::<Vec<String>>()
+        .collect::<Vec<String>>();
+
+    file_names.sort_by(|a, b| b.cmp(a));
+
+    file_names
 }
 
 fn get_file_path(filename: &String) -> PathBuf {
