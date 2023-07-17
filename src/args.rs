@@ -9,6 +9,7 @@ pub enum Command {
     Logout,
     Create,
     List,
+    Edit,
 }
 
 #[derive(Parser, Debug)]

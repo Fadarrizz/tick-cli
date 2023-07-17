@@ -13,6 +13,7 @@ mod files;
 mod api;
 mod input;
 mod list;
+mod edit;
 
 fn main() {
     if let Err(e) = args::get().and_then(try_main) {
@@ -29,6 +30,7 @@ fn try_main(args: Args) -> Result<()> {
         Logout => logout(&config),
         Create => create(&config),
         List => list(&config),
+        Edit => edit(&config),
     }?;
 
     if matched {
@@ -56,6 +58,12 @@ fn list(config: &Config) -> Result<bool> {
     check_auth(config);
 
     Ok(list::list_entries().is_ok())
+}
+
+fn edit(config: &Config) -> Result<bool> {
+    check_auth(config);
+
+    Ok(edit::edit_entry(config).is_ok())
 }
 
 fn check_auth(config: &Config) {

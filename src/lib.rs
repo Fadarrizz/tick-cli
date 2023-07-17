@@ -69,7 +69,7 @@ impl Task {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 pub struct Entry {
-    project: String,
+    project_name: String,
     task_id: u32,
     task_name: String,
     start_time: NaiveTime,
@@ -79,7 +79,7 @@ pub struct Entry {
 
 impl Entry {
     pub fn create(
-        project: String,
+        project_name: String,
         task_id: u32,
         task_name: String,
         start_time: NaiveTime,
@@ -87,13 +87,44 @@ impl Entry {
         notes: String,
     ) -> Self {
         Self {
-            project,
+            project_name,
             task_id,
             task_name,
             start_time,
             end_time,
             notes,
         }
+    }
+
+    pub fn get_project_name(&self) -> &String {
+        &self.project_name
+    }
+
+    pub fn get_task_name(&self) -> &String {
+        &self.task_name
+    }
+
+    pub fn get_start_time(&self) -> &NaiveTime {
+        &self.start_time
+    }
+
+    pub fn get_notes(&self) -> &String {
+        &self.notes
+    }
+
+    pub fn update(
+        &mut self,
+        project_name: String,
+        task_id: u32,
+        task_name: String,
+        start_time: NaiveTime,
+        notes: String,
+    ) {
+        self.project_name = project_name;
+        self.task_id = task_id;
+        self.task_name = task_name;
+        self.start_time = start_time;
+        self.notes = notes;
     }
 
     pub fn set_end_time(&mut self, end_time: NaiveTime) {
@@ -103,7 +134,7 @@ impl Entry {
 
 impl fmt::Display for Entry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}: {} | {}", self.start_time.format("%H:%M"), self.project, self.notes)
+        write!(f, "{}: {} | {}", self.start_time.format("%H:%M"), self.project_name, self.notes)
     }
 }
 
@@ -115,6 +146,10 @@ pub struct EntryList {
 impl EntryList {
     pub fn empty() -> Self {
         Self { entries: vec![] }
+    }
+
+    pub fn get_mut(&mut self, index: usize) -> &mut Entry {
+        &mut self.entries[index]
     }
 
     pub fn get_all(&self) -> &Vec<Entry> {
