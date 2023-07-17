@@ -130,6 +130,16 @@ impl Entry {
     pub fn set_end_time(&mut self, end_time: NaiveTime) {
         self.end_time = Some(end_time)
     }
+
+    pub fn calculate_hours(&self) -> f64 {
+        if self.end_time.is_none() {
+            return 0.0
+        }
+
+        let diff = self.end_time.unwrap() - self.start_time;
+
+        (diff.num_minutes() as f64) / 60.0
+    }
 }
 
 impl fmt::Display for Entry {
@@ -199,6 +209,31 @@ mod tests {
     use std::str::FromStr;
 
     use super::*;
+
+    #[test]
+    fn test_calculate_entry_hours() {
+        let entry = Entry::create(
+            "project A".to_string(),
+            1,
+            "task 1".to_string(),
+            NaiveTime::from_str("09:00:00").unwrap(),
+            Some(NaiveTime::from_str("10:00:00").unwrap()),
+            "notes".to_string(),
+        );
+
+        assert_eq!(1.0, entry.calculate_hours());
+
+        let entry = Entry::create(
+            "project A".to_string(),
+            1,
+            "task 1".to_string(),
+            NaiveTime::from_str("09:00:00").unwrap(),
+            Some(NaiveTime::from_str("10:15:00").unwrap()),
+            "notes".to_string(),
+        );
+
+        assert_eq!(1.25, entry.calculate_hours());
+    }
 
     #[test]
     fn test_entries_sorted_on_add() {
