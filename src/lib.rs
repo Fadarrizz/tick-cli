@@ -148,6 +148,10 @@ impl EntryList {
         Self { entries: vec![] }
     }
 
+    pub fn get(&self, index: usize) -> &Entry {
+        &self.entries[index]
+    }
+
     pub fn get_mut(&mut self, index: usize) -> &mut Entry {
         &mut self.entries[index]
     }
@@ -171,9 +175,10 @@ impl EntryList {
 
         if let Some(mut current) = iter.next() {
             for next in iter {
-                let end_time = next.start_time.clone();
-                current.set_end_time(end_time);
-
+                if current.end_time.is_none() {
+                    let end_time = next.start_time.clone();
+                    current.set_end_time(end_time);
+                }
                 current = next;
             }
         }
@@ -261,5 +266,49 @@ mod tests {
         let expected = Some(NaiveTime::from_str("10:00:00").unwrap());
         assert_eq!(expected, entries.get_all()[0].end_time);
         assert_eq!(None, entries.get_all()[1].end_time);
+    }
+
+    #[test]
+    fn test_set_entry_end_times_only_when_not_set() {
+        let mut entries = EntryList::empty();
+
+        entries.add(Entry::create(
+            "project A".to_string(),
+            1,
+            "task 1".to_string(),
+            NaiveTime::from_str("09:00:00").unwrap(),
+            Some(NaiveTime::from_str("09:30:00").unwrap()),
+            "notes".to_string(),
+        ));
+
+        entries.add(Entry::create(
+            "project B".to_string(),
+            2,
+            "task 2".to_string(),
+            NaiveTime::from_str("10:00:00").unwrap(),
+            None,
+            "notes".to_string(),
+        ));
+
+        entries.add(Entry::create(
+            "project C".to_string(),
+            3,
+            "task 3".to_string(),
+            NaiveTime::from_str("10:30:00").unwrap(),
+            None,
+            "notes".to_string(),
+        ));
+
+        entries.set_end_times();
+
+        assert_eq!(
+            Some(NaiveTime::from_str("09:30:00").unwrap()),
+            entries.get(0).end_time,
+        );
+        assert_eq!(
+            Some(NaiveTime::from_str("10:30:00").unwrap()),
+            entries.get(1).end_time,
+        );
+        assert_eq!(None, entries.get(2).end_time);
     }
 }
