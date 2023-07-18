@@ -13,6 +13,7 @@ pub enum Command {
 }
 
 #[derive(Parser, Debug)]
+#[command(bin_name = "tick")]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
     #[command(subcommand)]
