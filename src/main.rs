@@ -14,6 +14,7 @@ mod api;
 mod input;
 mod list;
 mod edit;
+mod submit;
 
 fn main() {
     if let Err(e) = args::get().and_then(try_main) {
@@ -31,6 +32,7 @@ fn try_main(args: Args) -> Result<()> {
         Create => create(&config),
         List => list(&config),
         Edit => edit(&config),
+        Submit => submit(&config),
     }?;
 
     if matched {
@@ -64,6 +66,12 @@ fn edit(config: &Config) -> Result<bool> {
     check_auth(config);
 
     Ok(edit::edit_entry(config).is_ok())
+}
+
+fn submit(config: &Config) -> Result<bool> {
+    check_auth(config);
+
+    Ok(submit::submit_entries(config).is_ok())
 }
 
 fn check_auth(config: &Config) {

@@ -10,6 +10,7 @@ pub enum Command {
     Create,
     List,
     Edit,
+    Submit,
 }
 
 #[derive(Parser, Debug)]
