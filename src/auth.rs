@@ -34,7 +34,13 @@ pub fn login(config: &mut Config) -> std::io::Result<()> {
 
     config.store().expect("Failed logging in");
 
-    let users = api::get_users(config);
+    let users = match api::get_users(config) {
+        Ok(users) => users,
+        Err(e) => {
+            println!("{}", e.message());
+            process::exit(1)
+        }
+    };
     let first_name = users.first().unwrap().get_first_name();
     println!("Logged in as {} from {}", style(first_name).bold(), style(role.get_company()).bold());
 

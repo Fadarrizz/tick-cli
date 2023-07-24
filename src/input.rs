@@ -18,7 +18,7 @@ pub fn fuzzy_select<T: ToString>(
     Some(select.interact().unwrap())
 }
 
-pub fn date(prompt: &str, default: Option<&String>) -> Option<String> {
+pub fn date(prompt: &str, default: Option<&String>) -> Option<NaiveDate> {
     let theme = &ColorfulTheme::default();
     let mut input = Input::with_theme(theme);
 
@@ -38,10 +38,12 @@ pub fn date(prompt: &str, default: Option<&String>) -> Option<String> {
         input.with_initial_text(default.unwrap());
     }
 
-    Some(input.interact().unwrap())
+    let date = input.interact().unwrap();
+
+    Some(NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap())
 }
 
-pub fn time(prompt: &str, default: Option<&String>) -> Option<String> {
+pub fn time(prompt: &str, default: Option<&String>) -> Option<NaiveTime> {
     let theme = &ColorfulTheme::default();
     let mut input = Input::with_theme(theme);
 
@@ -61,7 +63,9 @@ pub fn time(prompt: &str, default: Option<&String>) -> Option<String> {
         input.with_initial_text(default.unwrap());
     }
 
-    Some(input.interact().unwrap())
+    let time = input.interact().unwrap();
+
+    Some(NaiveTime::parse_from_str(&time, "%H:%M").unwrap())
 }
 
 pub fn default(prompt: &str, default: Option<&String>) -> Option<String> {

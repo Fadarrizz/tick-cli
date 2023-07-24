@@ -1,3 +1,5 @@
+use std::process;
+
 use crate::api;
 use crate::config::Config;
 use crate::files;
@@ -34,7 +36,13 @@ pub fn create_entry(config: &Config) -> std::io::Result<()> {
 }
 
 fn select_project(config: &Config) -> Option<Project> {
-    let projects: Vec<Project> = api::get_projects(config);
+    let projects: Vec<Project> = match api::get_projects(config) {
+        Ok(projects) => projects,
+        Err(e) => {
+            println!("{}", e.message());
+            process::exit(1)
+        }
+    };
 
     let project_names: Vec<String> = projects.iter().map(|p| p.get_name().clone()).collect();
 
@@ -45,7 +53,13 @@ fn select_project(config: &Config) -> Option<Project> {
 }
 
 fn select_task(config: &Config, project_id: &u32) -> Option<Task> {
-    let tasks: Vec<Task> = api::get_tasks(config, project_id);
+    let tasks: Vec<Task> = match api::get_tasks(config, project_id) {
+        Ok(tasks) => tasks,
+        Err(e) => {
+            println!("{}", e.message());
+            process::exit(1)
+        }
+    };
 
     let task_names: Vec<String> = tasks.iter().map(|t| t.get_name().clone()).collect();
 
@@ -57,15 +71,12 @@ fn select_task(config: &Config, project_id: &u32) -> Option<Task> {
 
 fn select_date() -> NaiveDate {
     let initial_text = Utc::now().format("%Y-%m-%d").to_string();
-    let date = input::date("Select a date", Some(&initial_text)).unwrap();
-
-    NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap()
+    
+    input::date("Select a date", Some(&initial_text)).unwrap()
 }
 
 fn input_start_time() -> NaiveTime {
-    let time = input::time("Input start time", None).unwrap();
-
-    NaiveTime::parse_from_str(&time, "%H:%M").unwrap()
+    input::time("Input start time", None).unwrap()
 }
 
 fn input_notes() -> String {

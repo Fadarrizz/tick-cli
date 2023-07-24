@@ -1,3 +1,5 @@
+use std::process;
+
 use chrono::NaiveTime;
 use tick_cli::{Entry, EntryList, Project, Task};
 
@@ -53,7 +55,13 @@ fn select_entry(entry_list: &mut EntryList) -> Option<&mut Entry> {
 }
 
 fn select_project(config: &Config, selected: &String) -> Option<Project> {
-    let projects: Vec<Project> = api::get_projects(config);
+    let projects: Vec<Project> = match api::get_projects(config) {
+        Ok(projects) => projects,
+        Err(e) => {
+            println!("{}", e.message());
+            process::exit(1)
+        }
+    };
 
     let project_names: Vec<String> = projects.iter().map(|p| p.get_name().clone()).collect();
     let selected_index: Option<usize> = project_names.iter().position(|n| n == selected);
@@ -65,7 +73,13 @@ fn select_project(config: &Config, selected: &String) -> Option<Project> {
 }
 
 fn select_task(config: &Config, project_id: &u32, selected: &String) -> Option<Task> {
-    let tasks: Vec<Task> = api::get_tasks(config, project_id);
+    let tasks: Vec<Task> = match api::get_tasks(config, project_id) {
+        Ok(tasks) => tasks,
+        Err(e) => {
+            println!("{}", e.message());
+            process::exit(1)
+        }
+    };
 
     let task_names: Vec<String> = tasks.iter().map(|t| t.get_name().clone()).collect();
     let selected_index: Option<usize> = task_names.iter().position(|n| n == selected);
@@ -78,9 +92,8 @@ fn select_task(config: &Config, project_id: &u32, selected: &String) -> Option<T
 
 fn input_start_time(start_time: &NaiveTime) -> NaiveTime {
     let initial = start_time.format("%H:%M").to_string();
-    let time = input::time("Input start time", Some(&initial)).unwrap();
 
-    NaiveTime::parse_from_str(&time, "%H:%M").unwrap()
+    input::time("Input start time", Some(&initial)).unwrap()
 }
 
 fn input_notes(notes: &String) -> String {
@@ -95,10 +108,10 @@ fn confirm_entry(
 ) -> bool {
     println!("This will update the entry with the following data:");
 
-    println!("Project: {}", project_name);
-    println!("Task: {}", task_name);
-    println!("Start Time: {}", start_time);
-    println!("Notes: {}", notes);
+    println!("  Project: {}", project_name);
+    println!("  Task: {}", task_name);
+    println!("  Start Time: {}", start_time);
+    println!("  Notes: {}", notes);
 
     input::confirm("Continue?").unwrap()
 }
