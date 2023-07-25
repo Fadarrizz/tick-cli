@@ -11,20 +11,32 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
 
     let entry = select_entry(&mut entries).unwrap();
 
-    let project = select_project(config, entry.get_project_name()).unwrap();
-    let task = select_task(config, &project.get_id(), entry.get_task_name()).unwrap();
+    let project = select_project(config, entry.get_project_name());
+    let mut task = None;
+    if project.is_some() {
+        task = select_task(config, &project.as_ref().unwrap().get_id(), entry.get_task_name());
+    }
     let start_time = input_start_time(entry.get_start_time());
     let notes = input_notes(entry.get_notes());
 
+    let project_name = match project {
+        Some(project) => Some(project.get_name().clone()),
+        None => None,
+    };
+    let (task_id, task_name) = match task {
+        Some(task) => (Some(*task.get_id()), Some(task.get_name().clone())),
+        None => (None, None)
+    };
+
     // Selecting no means gracefully termination.
-    if confirm_entry(&project.get_name(), &task.get_name(), &start_time, &notes) == false {
+    if confirm_entry(&project_name, &task_name, &start_time, &notes) == false {
         return Ok(());
     }
 
     entry.update(
-        project.get_name().clone(),
-        task.get_id().clone(),
-        task.get_name().clone(),
+        project_name,
+        task_id,
+        task_name,
         start_time,
         notes,
     );
@@ -39,9 +51,9 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
 fn select_file() -> Option<String> {
     let existing_files = files::get_existing_file_names();
 
-    match input::fuzzy_select("Select a file", &existing_files, Some(0)) {
+    match input::fuzzy_select("Select a file", &existing_files, None) {
         Some(index) => Some(existing_files[index].clone()),
-        None => panic!("Nothing selected"),
+        None => None,
     }
 }
 
@@ -54,7 +66,7 @@ fn select_entry(entry_list: &mut EntryList) -> Option<&mut Entry> {
     }
 }
 
-fn select_project(config: &Config, selected: &String) -> Option<Project> {
+fn select_project(config: &Config, selected: Option<&String>) -> Option<Project> {
     let projects: Vec<Project> = match api::get_projects(config) {
         Ok(projects) => projects,
         Err(e) => {
@@ -64,15 +76,18 @@ fn select_project(config: &Config, selected: &String) -> Option<Project> {
     };
 
     let project_names: Vec<String> = projects.iter().map(|p| p.get_name().clone()).collect();
-    let selected_index: Option<usize> = project_names.iter().position(|n| n == selected);
+    let mut selected_index = None;
+    if selected.is_some() {
+        selected_index = project_names.iter().position(|n| n == selected.unwrap());
+    }
 
     match input::fuzzy_select("Select a project", &project_names, selected_index) {
         Some(index) => Some(projects[index].clone()),
-        None => panic!("Nothing selected"),
+        None => None,
     }
 }
 
-fn select_task(config: &Config, project_id: &u32, selected: &String) -> Option<Task> {
+fn select_task(config: &Config, project_id: &u32, selected: Option<&String>) -> Option<Task> {
     let tasks: Vec<Task> = match api::get_tasks(config, project_id) {
         Ok(tasks) => tasks,
         Err(e) => {
@@ -82,11 +97,14 @@ fn select_task(config: &Config, project_id: &u32, selected: &String) -> Option<T
     };
 
     let task_names: Vec<String> = tasks.iter().map(|t| t.get_name().clone()).collect();
-    let selected_index: Option<usize> = task_names.iter().position(|n| n == selected);
+    let mut selected_index = None;
+    if selected.is_some() {
+        selected_index = task_names.iter().position(|n| n == selected.unwrap());
+    }
 
     match input::fuzzy_select("Select a task", &task_names, selected_index) {
         Some(index) => Some(tasks[index].clone()),
-        None => panic!("Nothing selected"),
+        None => None,
     }
 }
 
@@ -96,22 +114,22 @@ fn input_start_time(start_time: &NaiveTime) -> NaiveTime {
     input::time("Input start time", Some(&initial)).unwrap()
 }
 
-fn input_notes(notes: &String) -> String {
-    input::default("Input notes", Some(notes)).unwrap()
+fn input_notes(notes: Option<&String>) -> Option<String> {
+    input::default("Input notes", notes)
 }
 
 fn confirm_entry(
-    project_name: &str,
-    task_name: &str,
+    project_name: &Option<String>,
+    task_name: &Option<String>,
     start_time: &NaiveTime,
-    notes: &String,
+    notes: &Option<String>,
 ) -> bool {
     println!("This will update the entry with the following data:");
 
-    println!("  Project: {}", project_name);
-    println!("  Task: {}", task_name);
+    println!("  Project: {}", project_name.as_ref().unwrap());
+    println!("  Task: {}", task_name.as_ref().unwrap());
     println!("  Start Time: {}", start_time);
-    println!("  Notes: {}", notes);
+    println!("  Notes: {}", notes.as_ref().unwrap());
 
     input::confirm("Continue?").unwrap()
 }

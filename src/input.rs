@@ -15,7 +15,7 @@ pub fn fuzzy_select<T: ToString>(
         select.default(default.unwrap());
     }
 
-    Some(select.interact().unwrap())
+    select.interact_opt().unwrap()
 }
 
 pub fn date(prompt: &str, default: Option<&String>) -> Option<NaiveDate> {

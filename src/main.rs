@@ -8,7 +8,7 @@ type Result<T> = ::std::result::Result<T, Box<dyn Error>>;
 mod auth;
 mod config;
 mod args;
-mod create;
+mod add;
 mod files;
 mod api;
 mod input;
@@ -29,7 +29,7 @@ fn try_main(args: Args) -> Result<()> {
     let matched = match args.command {
         Login => login(&mut config),
         Logout => logout(&config),
-        Create => create(&config),
+        Add => add(&config),
         List => list(&config),
         Edit => edit(&config),
         Submit => submit(&config),
@@ -50,10 +50,10 @@ fn logout(config: &Config) -> Result<bool> {
     Ok(auth::logout(config).is_ok())
 }
 
-fn create(config: &Config) -> Result<bool> {
+fn add(config: &Config) -> Result<bool> {
     check_auth(config);
 
-    Ok(create::create_entry(config).is_ok())
+    Ok(add::add_entry(config).is_ok())
 }
 
 fn list(config: &Config) -> Result<bool> {

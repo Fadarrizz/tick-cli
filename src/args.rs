@@ -7,7 +7,7 @@ type ArgResult<T> = Result<T, Box<dyn Error>>;
 pub enum Command {
     Login,
     Logout,
-    Create,
+    Add,
     List,
     Edit,
     Submit,

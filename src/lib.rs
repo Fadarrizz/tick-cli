@@ -70,22 +70,22 @@ impl Task {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 pub struct Entry {
-    project_name: String,
-    task_id: u32,
-    task_name: String,
+    project_name: Option<String>,
+    task_id: Option<u32>,
+    task_name: Option<String>,
     start_time: NaiveTime,
     end_time: Option<NaiveTime>,
-    notes: String,
+    notes: Option<String>,
 }
 
 impl Entry {
     pub fn create(
-        project_name: String,
-        task_id: u32,
-        task_name: String,
+        project_name: Option<String>,
+        task_id: Option<u32>,
+        task_name: Option<String>,
         start_time: NaiveTime,
         end_time: Option<NaiveTime>,
-        notes: String,
+        notes: Option<String>,
     ) -> Self {
         Self {
             project_name,
@@ -97,16 +97,16 @@ impl Entry {
         }
     }
 
-    pub fn get_project_name(&self) -> &String {
-        &self.project_name
+    pub fn get_project_name(&self) -> Option<&String> {
+        self.project_name.as_ref()
     }
 
-    pub fn get_task_id(&self) -> &u32 {
-        &self.task_id
+    pub fn get_task_id(&self) -> Option<&u32> {
+        self.task_id.as_ref()
     }
 
-    pub fn get_task_name(&self) -> &String {
-        &self.task_name
+    pub fn get_task_name(&self) -> Option<&String> {
+        self.task_name.as_ref()
     }
 
     pub fn get_start_time(&self) -> &NaiveTime {
@@ -117,17 +117,17 @@ impl Entry {
         self.end_time.is_none()
     }
 
-    pub fn get_notes(&self) -> &String {
-        &self.notes
+    pub fn get_notes(&self) -> Option<&String> {
+        self.notes.as_ref()
     }
 
     pub fn update(
         &mut self,
-        project_name: String,
-        task_id: u32,
-        task_name: String,
+        project_name: Option<String>,
+        task_id: Option<u32>,
+        task_name: Option<String>,
         start_time: NaiveTime,
-        notes: String,
+        notes: Option<String>,
     ) {
         self.project_name = project_name;
         self.task_id = task_id;
@@ -155,15 +155,23 @@ impl fmt::Display for Entry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "  {}{}: {} | {}",
+            "  {}{}{}{}",
             self.start_time.format("%H:%M"),
             if self.end_time.is_some() { 
                 format!(" - {}", self.end_time.unwrap().format("%H:%M")) 
             } else { 
                 String::new() 
             },
-            self.project_name,
-            self.notes,
+            if self.project_name.is_some() {
+                format!(": {}", self.get_project_name().unwrap())
+            } else {
+                String::new()
+            },
+            if self.notes.is_some() {
+                format!(" | {}", self.get_notes().unwrap())
+            } else {
+                String::new()
+            }
         )
     }
 }
@@ -244,9 +252,9 @@ impl TickEntry {
     pub fn from_entry(date: String, entry: &Entry) -> Self {
         Self {
             date,
-            task_id: *entry.get_task_id(),
+            task_id: *entry.get_task_id().unwrap(),
             hours: entry.calculate_hours(),
-            notes: entry.get_notes().clone(),
+            notes: entry.get_notes().unwrap().clone(),
         }
     }
 
@@ -330,23 +338,23 @@ mod tests {
     #[test]
     fn test_calculate_entry_hours() {
         let entry = Entry::create(
-            "project A".to_string(),
-            1,
-            "task 1".to_string(),
+            None,
+            None,
+            None,
             NaiveTime::from_str("09:00:00").unwrap(),
             Some(NaiveTime::from_str("10:00:00").unwrap()),
-            "notes".to_string(),
+            None,
         );
 
         assert_eq!(1.0, entry.calculate_hours());
 
         let entry = Entry::create(
-            "project A".to_string(),
-            1,
-            "task 1".to_string(),
+            None,
+            None,
+            None,
             NaiveTime::from_str("09:00:00").unwrap(),
             Some(NaiveTime::from_str("10:15:00").unwrap()),
-            "notes".to_string(),
+            None,
         );
 
         assert_eq!(1.25, entry.calculate_hours());
