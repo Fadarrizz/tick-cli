@@ -39,7 +39,7 @@ pub fn add_entry(config: &Config) -> std::io::Result<()> {
         task_name,
         start_time,
         None,
-        notes.to_owned(),
+        notes,
     ));
 
     files::store_entry_list(entries, &filename).expect("Cannot store entry list");
@@ -95,17 +95,25 @@ fn _input_end_time() -> NaiveTime {
     input::time("Input start time", None).unwrap()
 }
 
-fn input_notes() -> Option<String> {
+fn input_notes() -> String {
     input::default("Input notes", None)
 }
 
-fn confirm_entry(project_name: &Option<String>, task_name: &Option<String>, start_time: &NaiveTime, notes: &Option<String>) -> bool {
+fn confirm_entry(
+    project_name: &Option<String>,
+    task_name: &Option<String>,
+    start_time: &NaiveTime,
+    notes: &String,
+) -> bool {
     println!("This will create a entry with the following data:");
 
-    println!("Project: {}", project_name.as_ref().unwrap());
-    println!("Task: {}", task_name.as_ref().unwrap());
-    println!("Start Time: {}", start_time);
-    println!("Notes: {}", notes.as_ref().unwrap());
+    let empty_string = String::new();
+    let project = match project_name.as_ref() { Some(p) => p, None => &empty_string };
+    let task = match task_name.as_ref() { Some(t) => t, None => &empty_string };
+    println!("  Project: {}",  project);
+    println!("  Task: {}", task);
+    println!("  Start Time: {}", start_time);
+    println!("  Notes: {}", notes);
 
     input::confirm("Continue?").unwrap()
 }

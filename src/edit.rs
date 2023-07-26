@@ -114,22 +114,25 @@ fn input_start_time(start_time: &NaiveTime) -> NaiveTime {
     input::time("Input start time", Some(&initial)).unwrap()
 }
 
-fn input_notes(notes: Option<&String>) -> Option<String> {
-    input::default("Input notes", notes)
+fn input_notes(notes: &String) -> String {
+    input::default("Input notes", Some(notes))
 }
 
 fn confirm_entry(
     project_name: &Option<String>,
     task_name: &Option<String>,
     start_time: &NaiveTime,
-    notes: &Option<String>,
+    notes: &String,
 ) -> bool {
     println!("This will update the entry with the following data:");
 
-    println!("  Project: {}", project_name.as_ref().unwrap());
-    println!("  Task: {}", task_name.as_ref().unwrap());
-    println!("  Start Time: {}", start_time);
-    println!("  Notes: {}", notes.as_ref().unwrap());
+    let empty_string = String::new();
+    let project = match project_name.as_ref() { Some(p) => p, None => &empty_string };
+    let task = match task_name.as_ref() { Some(t) => t, None => &empty_string };
+    println!("  Project: {}", project);
+    println!("  Task: {}", task);
+    println!("  Start Time: {}", start_time.format("%H:%M"));
+    println!("  Notes: {}", notes);
 
     input::confirm("Continue?").unwrap()
 }

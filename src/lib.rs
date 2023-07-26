@@ -75,7 +75,7 @@ pub struct Entry {
     task_name: Option<String>,
     start_time: NaiveTime,
     end_time: Option<NaiveTime>,
-    notes: Option<String>,
+    notes: String,
 }
 
 impl Entry {
@@ -85,7 +85,7 @@ impl Entry {
         task_name: Option<String>,
         start_time: NaiveTime,
         end_time: Option<NaiveTime>,
-        notes: Option<String>,
+        notes: String,
     ) -> Self {
         Self {
             project_name,
@@ -117,8 +117,8 @@ impl Entry {
         self.end_time.is_none()
     }
 
-    pub fn get_notes(&self) -> Option<&String> {
-        self.notes.as_ref()
+    pub fn get_notes(&self) -> &String {
+        &self.notes
     }
 
     pub fn update(
@@ -127,7 +127,7 @@ impl Entry {
         task_id: Option<u32>,
         task_name: Option<String>,
         start_time: NaiveTime,
-        notes: Option<String>,
+        notes: String,
     ) {
         self.project_name = project_name;
         self.task_id = task_id;
@@ -162,13 +162,13 @@ impl fmt::Display for Entry {
             } else { 
                 String::new() 
             },
-            if self.project_name.is_some() {
-                format!(": {}", self.get_project_name().unwrap())
+            if self.task_name.is_some() {
+                format!(": {} | {}", self.get_project_name().unwrap(), self.get_task_name().unwrap())
             } else {
                 String::new()
             },
-            if self.notes.is_some() {
-                format!(" | {}", self.get_notes().unwrap())
+            if !self.notes.is_empty() {
+                format!(": {}", self.get_notes())
             } else {
                 String::new()
             }
@@ -254,7 +254,7 @@ impl TickEntry {
             date,
             task_id: *entry.get_task_id().unwrap(),
             hours: entry.calculate_hours(),
-            notes: entry.get_notes().unwrap().clone(),
+            notes: entry.get_notes().clone(),
         }
     }
 
@@ -343,7 +343,7 @@ mod tests {
             None,
             NaiveTime::from_str("09:00:00").unwrap(),
             Some(NaiveTime::from_str("10:00:00").unwrap()),
-            None,
+            String::empty(),
         );
 
         assert_eq!(1.0, entry.calculate_hours());
@@ -354,7 +354,7 @@ mod tests {
             None,
             NaiveTime::from_str("09:00:00").unwrap(),
             Some(NaiveTime::from_str("10:15:00").unwrap()),
-            None,
+            String::empty(),
         );
 
         assert_eq!(1.25, entry.calculate_hours());
