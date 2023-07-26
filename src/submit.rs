@@ -6,13 +6,10 @@ use tick_cli::{Entry, TickEntryList};
 use crate::{files, input, api, config::Config};
 
 pub fn submit_entries(config: &Config) -> std::io::Result<()> {
-    // select file to submit
     let filename = select_file().unwrap();
 
-    // collect entries
     let mut entries = files::load_entry_list(&filename).expect("Cannot load entries");
 
-    // ask to set end time of last entry, if not set
     let last_entry = entries.get_last().unwrap();
     if last_entry.is_missing_end_time() {
         println!("You didn't set an end time for the last entry of this day:");
@@ -22,13 +19,10 @@ pub fn submit_entries(config: &Config) -> std::io::Result<()> {
         set_last_entry_end_time(entries.get_last_mut().unwrap());
     }
 
-    // set end times
     entries.set_end_times();
 
-    // convert entries to tick entries
     let mut tick_entry_list = TickEntryList::from_entry_list(&filename, &entries);
 
-    // merge those that have the same task
     tick_entry_list.merge();
 
     for entry in tick_entry_list.get_all() {
