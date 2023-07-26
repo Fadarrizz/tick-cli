@@ -51,7 +51,7 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
 fn select_file() -> Option<String> {
     let existing_files = files::get_existing_file_names();
 
-    match input::fuzzy_select("Select a file", &existing_files, None) {
+    match input::fuzzy_select("Select a file", &existing_files, Some(0), false) {
         Some(index) => Some(existing_files[index].clone()),
         None => None,
     }
@@ -60,7 +60,7 @@ fn select_file() -> Option<String> {
 fn select_entry(entry_list: &mut EntryList) -> Option<&mut Entry> {
     let entries = entry_list.get_all();
 
-    match input::fuzzy_select("Select an entry", entries, Some(0)) {
+    match input::fuzzy_select("Select an entry", entries, Some(0), false) {
         Some(index) => Some(entry_list.get_mut(index)),
         None => panic!("Nothing selected"),
     }
@@ -81,7 +81,7 @@ fn select_project(config: &Config, selected: Option<&String>) -> Option<Project>
         selected_index = project_names.iter().position(|n| n == selected.unwrap());
     }
 
-    match input::fuzzy_select("Select a project", &project_names, selected_index) {
+    match input::fuzzy_select("Select a project", &project_names, selected_index, true) {
         Some(index) => Some(projects[index].clone()),
         None => None,
     }
@@ -102,7 +102,7 @@ fn select_task(config: &Config, project_id: &u32, selected: Option<&String>) -> 
         selected_index = task_names.iter().position(|n| n == selected.unwrap());
     }
 
-    match input::fuzzy_select("Select a task", &task_names, selected_index) {
+    match input::fuzzy_select("Select a task", &task_names, selected_index, true) {
         Some(index) => Some(tasks[index].clone()),
         None => None,
     }

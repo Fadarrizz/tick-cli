@@ -5,17 +5,28 @@ pub fn fuzzy_select<T: ToString>(
     prompt: &str,
     items: &[T],
     default: Option<usize>,
+    opt: bool,
 ) -> Option<usize> {
     let theme = &ColorfulTheme::default();
     let mut select = FuzzySelect::with_theme(theme);
 
-    select.with_prompt(prompt).items(items);
+    if opt == true {
+        println!("Skip with <esc>");
+    }
+
+    select
+        .with_prompt(prompt)
+        .items(items);
 
     if default.is_some() {
         select.default(default.unwrap());
     }
 
-    select.interact_opt().unwrap()
+    if opt == true {
+        select.interact_opt().unwrap()
+    } else {
+        Some(select.interact().unwrap())
+    }
 }
 
 pub fn date(prompt: &str, default: Option<&String>) -> Option<NaiveDate> {
@@ -68,17 +79,19 @@ pub fn time(prompt: &str, default: Option<&String>) -> Option<NaiveTime> {
     Some(NaiveTime::parse_from_str(&time, "%H:%M").unwrap())
 }
 
-pub fn default(prompt: &str, default: Option<&String>) -> Option<String> {
+pub fn default(prompt: &str, default: Option<&String>) -> String {
     let theme = &ColorfulTheme::default();
     let mut input = Input::with_theme(theme);
 
-    input.with_prompt(prompt);
+    input
+        .allow_empty(true)
+        .with_prompt(prompt);
 
     if default.is_some() {
         input.with_initial_text(default.unwrap());
     }
 
-    Some(input.interact().unwrap())
+    input.interact().unwrap()
 }
 
 pub fn confirm(prompt: &str) -> Option<bool> {

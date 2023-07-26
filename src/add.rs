@@ -18,7 +18,6 @@ pub fn add_entry(config: &Config) -> std::io::Result<()> {
     let start_time = input_start_time();
     let notes = input_notes();
 
-
     let project_name = match project {
         Some(project) => Some(project.get_name().clone()),
         None => None,
@@ -58,7 +57,7 @@ fn select_project(config: &Config) -> Option<Project> {
 
     let project_names: Vec<String> = projects.iter().map(|p| p.get_name().clone()).collect();
 
-    match input::fuzzy_select("Select a project", &project_names, None) {
+    match input::fuzzy_select("Select a project", &project_names, None, true) {
         Some(index) => Some(projects[index].clone()),
         None => None,
     }
@@ -75,7 +74,7 @@ fn select_task(config: &Config, project_id: &u32) -> Option<Task> {
 
     let task_names: Vec<String> = tasks.iter().map(|t| t.get_name().clone()).collect();
 
-    match input::fuzzy_select("Select a task", &task_names, None) {
+    match input::fuzzy_select("Select a task", &task_names, None, true) {
         Some(index) => Some(tasks[index].clone()),
         None => None,
     }
