@@ -66,6 +66,7 @@ fn submit(config: &Config, filename: &String, tick_entries: &TickEntryList) {
         let mut entry = tick_entry.get_entry().unwrap().to_owned();
 
         if entry.is_submitted() && !entry.should_be_updated() {
+            entries.add(entry);
             continue;
         }
 

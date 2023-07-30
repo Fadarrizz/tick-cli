@@ -300,7 +300,7 @@ impl TickEntry {
     pub fn from_entry(date: String, entry: Entry) -> Self {
         Self {
             entry: Some(entry.clone()),
-            id: None,
+            id: entry.get_tick_id().copied(),
             date,
             task_id: *entry.get_task_id().unwrap(),
             hours: entry.calculate_hours(),
