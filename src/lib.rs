@@ -213,7 +213,7 @@ impl fmt::Display for Entry {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct EntryList {
     entries: Vec<Entry>,
 }
@@ -221,6 +221,10 @@ pub struct EntryList {
 impl EntryList {
     pub fn empty() -> Self {
         Self { entries: vec![] }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
     }
 
     pub fn get(&self, index: usize) -> &Entry {
@@ -265,6 +269,10 @@ impl EntryList {
                 current = next;
             }
         }
+    }
+
+    pub fn remove(&mut self, index: usize) {
+        self.entries.remove(index);
     }
 }
 

@@ -36,6 +36,12 @@ pub fn store_entry_list(entries: EntryList, filename: &String) -> Result<()> {
     Ok(())
 }
 
+pub fn delete_file(filename: &String) -> Result<()> {
+    fs::remove_file(get_file_path(filename)).expect("Cannot remove file");
+
+    Ok(())
+}
+
 pub fn get_existing_file_names() -> Vec<String> {
     let mut file_names = fs::read_dir(get_base_dir())
         .unwrap()

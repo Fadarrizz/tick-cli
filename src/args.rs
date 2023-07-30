@@ -11,6 +11,7 @@ pub enum Command {
     List,
     Edit,
     Submit,
+    Delete,
 }
 
 #[derive(Parser, Debug)]

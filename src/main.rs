@@ -15,6 +15,7 @@ mod input;
 mod list;
 mod edit;
 mod submit;
+mod delete;
 
 fn main() {
     if let Err(e) = args::get().and_then(try_main) {
@@ -33,6 +34,7 @@ fn try_main(args: Args) -> Result<()> {
         List => list(&config),
         Edit => edit(&config),
         Submit => submit(&config),
+        Delete => delete(&config),
     }?;
 
     if matched {
@@ -72,6 +74,12 @@ fn submit(config: &Config) -> Result<bool> {
     check_auth(config);
 
     Ok(submit::submit_entries(config).is_ok())
+}
+
+fn delete(config: &Config) -> Result<bool> {
+    check_auth(config);
+
+    Ok(delete::delete_entry(config).is_ok())
 }
 
 fn check_auth(config: &Config) {

@@ -107,6 +107,16 @@ pub fn update_entry(config: &Config, entry: &TickEntry) -> Result<TickEntry, Api
     to_result(response)
 }
 
+pub fn delete_entry(config: &Config, id: u32) -> Result<TickEntry, ApiError> {
+    let response = Client::new()
+        .delete(format!("{}/{}/api/v2/entries/{}.json", BASE_URL, config.get_subscription_id(), id))
+        .bearer_auth(config.get_api_key())
+        .header(header::USER_AGENT, USER_AGENT)
+        .send().expect("Unable to delete entry");
+
+    to_result(response)
+}
+
 fn to_result<T: DeserializeOwned>(response: reqwest::blocking::Response) -> Result<T, ApiError> {
     match response.status().as_u16() {
         200..=299 => {
