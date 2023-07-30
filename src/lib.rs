@@ -1,6 +1,6 @@
 use core::fmt;
 
-use chrono::NaiveTime;
+use chrono::{NaiveTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -76,6 +76,8 @@ pub struct Entry {
     start_time: NaiveTime,
     end_time: Option<NaiveTime>,
     notes: String,
+    submitted_at: Option<NaiveDateTime>,
+    updated_at: Option<NaiveDateTime>,
 }
 
 impl Entry {
@@ -95,6 +97,8 @@ impl Entry {
             start_time,
             end_time,
             notes,
+            submitted_at: None,
+            updated_at: None,
         }
     }
 
@@ -145,6 +149,7 @@ impl Entry {
         self.start_time = start_time;
         self.end_time = end_time;
         self.notes = notes;
+        self.updated_at = Some(Utc::now().naive_utc());
     }
 
     pub fn set_tick_id(&mut self, id: u32) {
@@ -163,6 +168,23 @@ impl Entry {
         let diff = self.end_time.unwrap() - self.start_time;
 
         (diff.num_minutes() as f64) / 60.0
+    }
+
+
+    pub fn set_submitted_at(&mut self) {
+        self.submitted_at = Some(Utc::now().naive_utc());
+    }
+
+    pub fn is_submitted(&self) -> bool {
+        self.submitted_at.is_some()
+    }
+
+    pub fn should_be_updated(&self) -> bool {
+        if self.submitted_at.is_none() || self.updated_at.is_none() {
+            return false;
+        } 
+
+        self.updated_at.unwrap() > self.submitted_at.unwrap()
     }
 }
 

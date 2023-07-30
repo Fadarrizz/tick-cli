@@ -80,13 +80,29 @@ pub fn get_tasks(config: &Config, project_id: &u32) -> Result<Vec<Task>, ApiErro
     to_result(response)
 }
 
-pub fn send_entry(config: &Config, entry: &TickEntry) -> Result<TickEntry, ApiError> {
+pub fn create_entry(config: &Config, entry: &TickEntry) -> Result<TickEntry, ApiError> {
     let response = Client::new()
         .post(format!("{}/{}/api/v2/entries.json", BASE_URL, config.get_subscription_id()))
         .bearer_auth(config.get_api_key())
         .header(header::USER_AGENT, USER_AGENT)
         .json(&entry)
-        .send().expect("Unable to send entry");
+        .send().expect("Unable to create entry");
+
+    to_result(response)
+}
+
+pub fn update_entry(config: &Config, entry: &TickEntry) -> Result<TickEntry, ApiError> {
+    let response = Client::new()
+        .put(format!(
+            "{}/{}/api/v2/entries/{}.json",
+            BASE_URL,
+            config.get_subscription_id(),
+            entry.get_id().unwrap(),
+        ))
+        .bearer_auth(config.get_api_key())
+        .header(header::USER_AGENT, USER_AGENT)
+        .json(&entry)
+        .send().expect("Unable to update entry");
 
     to_result(response)
 }

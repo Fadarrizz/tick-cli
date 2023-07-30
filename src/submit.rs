@@ -1,15 +1,37 @@
 use std::process;
 
 use chrono::NaiveTime;
-use tick_cli::{Entry, TickEntryList, EntryList};
+use tick_cli::{Entry, TickEntryList, EntryList, TickEntry};
 
-use crate::{files, input, api, config::Config};
+use crate::{files, input, api::{self, ApiError}, config::Config};
 
 pub fn submit_entries(config: &Config) -> std::io::Result<()> {
     let filename = select_file().unwrap();
-
     let mut entries = files::load_entry_list(&filename).expect("Cannot load entries");
 
+    set_entry_end_times(&mut entries);
+
+    if confirm_submit().is_none() {
+        return Ok(())
+    }
+
+    submit(config, &filename, &TickEntryList::from_entry_list(&filename, &entries));
+    
+    println!("Succesfully submitted all entries.");
+
+    Ok(())
+}
+
+fn select_file() -> Option<String> {
+    let existing_files = files::get_existing_file_names();
+
+    match input::fuzzy_select("Select a date", &existing_files, Some(0), false) {
+        Some(index) => Some(existing_files[index].clone()),
+        None => panic!("Nothing selected"),
+    }
+}
+
+fn set_entry_end_times(entries: &mut EntryList) {
     let last_entry = entries.get_last().unwrap();
     if last_entry.is_missing_end_time() {
         println!("You didn't set an end time for the last entry of this day:");
@@ -20,16 +42,45 @@ pub fn submit_entries(config: &Config) -> std::io::Result<()> {
     }
 
     entries.set_end_times();
+}
 
-    let tick_entry_list = TickEntryList::from_entry_list(&filename, &entries);
+fn set_last_entry_end_time(entry: &mut Entry) {
+    let end_time = input_end_time();
 
-    entries = EntryList::empty();
+    entry.set_end_time(end_time);
+}
+
+fn input_end_time() -> NaiveTime {
+    input::time("Input end time", None, false).unwrap()
+}
+
+fn confirm_submit() -> Option<bool> {
+    input::confirm("Are you sure you want to submit these entries?")
+}
+
+fn submit(config: &Config, filename: &String, tick_entries: &TickEntryList) {
+    let mut entries = EntryList::empty();
     let mut errors = Vec::new();
-    for tick_entry in tick_entry_list.get_all() {
+
+    for tick_entry in tick_entries.get_all() {
         let mut entry = tick_entry.get_entry().unwrap().to_owned();
 
-        match api::send_entry(config, &tick_entry) {
-            Ok(res_tick_entry) => entry.set_tick_id(res_tick_entry.get_id().unwrap()),
+        if entry.is_submitted() && !entry.should_be_updated() {
+            continue;
+        }
+
+        let response: Result<TickEntry, ApiError>;
+        if entry.should_be_updated() {
+            response = api::update_entry(config, &tick_entry);
+        } else {
+            response = api::create_entry(config, &tick_entry);
+        } 
+
+        match response {
+            Ok(res_tick_entry) => {
+                entry.set_tick_id(res_tick_entry.get_id().unwrap());
+                entry.set_submitted_at();
+            },
             Err(e) => errors.push((tick_entry.get_entry().unwrap(), e.message().clone()))
         };
 
@@ -43,28 +94,5 @@ pub fn submit_entries(config: &Config) -> std::io::Result<()> {
             println!("Couldn't send the following entry:\n {}\nError: {}", entry, message);
         }
         process::exit(1);
-    } else {
-        println!("Succesfully sent all entries.");
-    }
-
-    Ok(())
-}
-
-fn select_file() -> Option<String> {
-    let existing_files = files::get_existing_file_names();
-
-    match input::fuzzy_select("Select a file", &existing_files, Some(0), false) {
-        Some(index) => Some(existing_files[index].clone()),
-        None => panic!("Nothing selected"),
-    }
-}
-
-fn set_last_entry_end_time(entry: &mut Entry) {
-    let end_time = input_end_time();
-
-    entry.set_end_time(end_time);
-}
-
-fn input_end_time() -> NaiveTime {
-    input::time("Input end time", None, false).unwrap()
+    } 
 }
