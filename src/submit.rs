@@ -1,7 +1,7 @@
 use std::process;
 
 use chrono::NaiveTime;
-use tick_cli::{Entry, TickEntryList};
+use tick_cli::{Entry, TickEntryList, EntryList};
 
 use crate::{files, input, api, config::Config};
 
@@ -21,19 +21,31 @@ pub fn submit_entries(config: &Config) -> std::io::Result<()> {
 
     entries.set_end_times();
 
-    let mut tick_entry_list = TickEntryList::from_entry_list(&filename, &entries);
+    let tick_entry_list = TickEntryList::from_entry_list(&filename, &entries);
 
-    tick_entry_list.merge();
+    entries = EntryList::empty();
+    let mut errors = Vec::new();
+    for tick_entry in tick_entry_list.get_all() {
+        let mut entry = tick_entry.get_entry().unwrap().to_owned();
 
-    for entry in tick_entry_list.get_all() {
-        match api::send_entry(config, &entry) {
-            Ok(()) => continue,
-            Err(e) => {
-                println!("{}", e.message());
-                process::exit(1);
-            }
+        match api::send_entry(config, &tick_entry) {
+            Ok(res_tick_entry) => entry.set_tick_id(res_tick_entry.get_id().unwrap()),
+            Err(e) => errors.push((tick_entry.get_entry().unwrap(), e.message().clone()))
+        };
+
+        entries.add(entry);
+    }
+
+    files::store_entry_list(entries, &filename).expect("Unable to store entry list");
+
+    if !&errors.is_empty() {
+        for (entry, message) in errors {
+            println!("Couldn't send the following entry:\n {}\nError: {}", entry, message);
         }
-    };
+        process::exit(1);
+    } else {
+        println!("Succesfully sent all entries.");
+    }
 
     Ok(())
 }
@@ -54,5 +66,5 @@ fn set_last_entry_end_time(entry: &mut Entry) {
 }
 
 fn input_end_time() -> NaiveTime {
-    input::time("Input end time", None).unwrap()
+    input::time("Input end time", None, false).unwrap()
 }

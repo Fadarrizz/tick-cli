@@ -1,7 +1,6 @@
 use core::fmt;
 
 use chrono::NaiveTime;
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -70,6 +69,7 @@ impl Task {
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug, Clone)]
 pub struct Entry {
+    tick_id: Option<u32>,
     project_name: Option<String>,
     task_id: Option<u32>,
     task_name: Option<String>,
@@ -88,6 +88,7 @@ impl Entry {
         notes: String,
     ) -> Self {
         Self {
+            tick_id: None,
             project_name,
             task_id,
             task_name,
@@ -95,6 +96,10 @@ impl Entry {
             end_time,
             notes,
         }
+    }
+
+    pub fn get_tick_id(&self) -> Option<&u32> {
+        self.tick_id.as_ref()
     }
 
     pub fn get_project_name(&self) -> Option<&String> {
@@ -140,6 +145,10 @@ impl Entry {
         self.start_time = start_time;
         self.end_time = end_time;
         self.notes = notes;
+    }
+
+    pub fn set_tick_id(&mut self, id: u32) {
+        self.tick_id = Some(id)
     }
 
     pub fn set_end_time(&mut self, end_time: NaiveTime) {
@@ -246,8 +255,11 @@ impl fmt::Display for EntryList {
     }
 }
 
-#[derive(Serialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TickEntry {
+    #[serde(skip_serializing)]
+    entry: Option<Entry>,
+    id: Option<u32>,
     date: String,
     task_id: u32,
     hours: f64,
@@ -255,13 +267,23 @@ pub struct TickEntry {
 }
 
 impl TickEntry {
-    pub fn from_entry(date: String, entry: &Entry) -> Self {
+    pub fn from_entry(date: String, entry: Entry) -> Self {
         Self {
+            entry: Some(entry.clone()),
+            id: None,
             date,
             task_id: *entry.get_task_id().unwrap(),
             hours: entry.calculate_hours(),
             notes: entry.get_notes().clone(),
         }
+    }
+
+    pub fn get_entry(&self) -> Option<&Entry> {
+        self.entry.as_ref()
+    }
+
+    pub fn get_id(&self) -> Option<u32> {
+        self.id
     }
 
     pub fn get_date(&self) -> &String {
@@ -281,7 +303,7 @@ impl TickEntry {
     }
 }
 
-#[derive(Serialize, Debug)]
+#[derive(Serialize, Debug, Clone)]
 pub struct TickEntryList {
     tick_entries: Vec<TickEntry>,
 }
@@ -291,7 +313,8 @@ impl TickEntryList {
         let tick_entries = entry_list
         .get_all()
         .iter()
-        .map(|entry| TickEntry::from_entry(filename.clone(), entry))
+        .filter(|entry| entry.get_task_id().is_some())
+        .map(|entry| TickEntry::from_entry(filename.clone(), entry.to_owned()))
         .collect::<Vec<TickEntry>>();
 
         Self { tick_entries }
@@ -309,30 +332,6 @@ impl TickEntryList {
     pub fn len(&self) -> usize {
         self.tick_entries.len()
     }
-
-    pub fn merge(&mut self) {
-        self.tick_entries = self.tick_entries
-            .iter()
-            .sorted_by_key(|e| e.task_id)
-            .group_by(|e| (e.date.clone(), e.task_id))
-            .into_iter()
-            .map(|((date, task_id), group)| {
-                let (mut hours, mut notes) = (0.0, String::new());
-                for entry in group {
-                    hours += entry.hours;
-
-                    if !notes.contains(&entry.notes) {
-                        if !notes.is_empty() {
-                            notes.push_str(", ");
-                        }
-                        notes.push_str(&entry.notes);
-                    }
-                }
-
-                TickEntry { date, task_id, hours, notes }
-            })
-            .collect::<Vec<TickEntry>>()
-    }
 }
 
 #[cfg(test)]
@@ -349,7 +348,7 @@ mod tests {
             None,
             NaiveTime::from_str("09:00:00").unwrap(),
             Some(NaiveTime::from_str("10:00:00").unwrap()),
-            String::empty(),
+            String::new(),
         );
 
         assert_eq!(1.0, entry.calculate_hours());
@@ -360,7 +359,7 @@ mod tests {
             None,
             NaiveTime::from_str("09:00:00").unwrap(),
             Some(NaiveTime::from_str("10:15:00").unwrap()),
-            String::empty(),
+            String::new(),
         );
 
         assert_eq!(1.25, entry.calculate_hours());
@@ -371,18 +370,18 @@ mod tests {
         let mut entries = EntryList::empty();
 
         entries.add(Entry::create(
-            "project A".to_string(),
-            1,
-            "task 1".to_string(),
+            Some("project A".to_string()),
+            Some(1),
+            Some("task 1".to_string()),
             NaiveTime::from_str("10:00:00").unwrap(),
             None,
             "notes".to_string(),
         ));
 
         entries.add(Entry::create(
-            "project B".to_string(),
-            2,
-            "task 2".to_string(),
+            Some("project B".to_string()),
+            Some(2),
+            Some("task 2".to_string()),
             NaiveTime::from_str("09:00:00").unwrap(),
             None,
             "notes".to_string(),
@@ -391,9 +390,9 @@ mod tests {
         assert_eq!(NaiveTime::from_str("09:00:00").unwrap(), entries.get_all()[0].start_time);
 
         entries.add(Entry::create(
-            "project C".to_string(),
-            3,
-            "task 3".to_string(),
+            Some("project C".to_string()),
+            Some(3),
+            Some("task 3".to_string()),
             NaiveTime::from_str("08:59:59").unwrap(),
             None,
             "notes".to_string(),
@@ -407,18 +406,18 @@ mod tests {
         let mut entries = EntryList::empty();
 
         entries.add(Entry::create(
-            "project A".to_string(),
-            1,
-            "task 1".to_string(),
+            Some("project A".to_string()),
+            Some(1),
+            Some("task 1".to_string()),
             NaiveTime::from_str("10:00:00").unwrap(),
             None,
             "notes".to_string(),
         ));
 
         entries.add(Entry::create(
-            "project B".to_string(),
-            2,
-            "task 2".to_string(),
+            Some("project B".to_string()),
+            Some(2),
+            Some("task 2".to_string()),
             NaiveTime::from_str("09:00:00").unwrap(),
             None,
             "notes".to_string(),
@@ -439,27 +438,27 @@ mod tests {
         let mut entries = EntryList::empty();
 
         entries.add(Entry::create(
-            "project A".to_string(),
-            1,
-            "task 1".to_string(),
+            Some("project A".to_string()),
+            Some(1),
+            Some("task 1".to_string()),
             NaiveTime::from_str("09:00:00").unwrap(),
             Some(NaiveTime::from_str("09:30:00").unwrap()),
             "notes".to_string(),
         ));
 
         entries.add(Entry::create(
-            "project B".to_string(),
-            2,
-            "task 2".to_string(),
+            Some("project B".to_string()),
+            Some(2),
+            Some("task 2".to_string()),
             NaiveTime::from_str("10:00:00").unwrap(),
             None,
             "notes".to_string(),
         ));
 
         entries.add(Entry::create(
-            "project C".to_string(),
-            3,
-            "task 3".to_string(),
+            Some("project C".to_string()),
+            Some(3),
+            Some("task 3".to_string()),
             NaiveTime::from_str("10:30:00").unwrap(),
             None,
             "notes".to_string(),
@@ -476,130 +475,5 @@ mod tests {
             entries.get(1).end_time,
         );
         assert_eq!(None, entries.get(2).end_time);
-    }
-
-    #[test]
-    fn test_merge_tick_entries() {
-        let tick_entry1 = TickEntry {
-            date: "2023-07-01".to_string(),
-            task_id: 0,
-            hours: 1.5,
-            notes: "first entry".to_string(),
-        };
-
-        let tick_entry2 = TickEntry {
-            date: "2023-07-01".to_string(),
-            task_id: 0,
-            hours: 1.25,
-            notes: "second entry".to_string(),
-        };
-
-        let tick_entry3 = TickEntry {
-            date: "2023-07-01".to_string(),
-            task_id: 99,
-            hours: 2.0,
-            notes: "third entry".to_string(),
-        };
-        
-        let mut tick_entry_list = TickEntryList {
-            tick_entries: vec![tick_entry1, tick_entry2, tick_entry3],
-        };
-
-        assert_eq!(3, tick_entry_list.len());
-
-        tick_entry_list.merge();
-
-        assert_eq!(2, tick_entry_list.len());
-
-        let merged_entry = tick_entry_list.get(0);
-        assert_eq!(&"2023-07-01".to_string(), merged_entry.get_date());
-        assert_eq!(&0, merged_entry.get_task_id());
-        assert_eq!(&2.75, merged_entry.get_hours());
-        assert_eq!(&"first entry, second entry".to_string(), merged_entry.get_notes());
-
-        let not_merged_entry = tick_entry_list.get(1);
-        assert_eq!(&"2023-07-01".to_string(), not_merged_entry.get_date());
-        assert_eq!(&99, not_merged_entry.get_task_id());
-        assert_eq!(&2.0, not_merged_entry.get_hours());
-        assert_eq!(&"third entry".to_string(), not_merged_entry.get_notes());
-    }
-
-    #[test]
-    fn test_merge_tick_entries_spread_out() {
-        let tick_entry1 = TickEntry {
-            date: "2023-07-01".to_string(),
-            task_id: 0,
-            hours: 1.5,
-            notes: "first entry".to_string(),
-        };
-
-        let tick_entry2 = TickEntry {
-            date: "2023-07-01".to_string(),
-            task_id: 1,
-            hours: 2.0,
-            notes: "second entry".to_string(),
-        };
-
-        let tick_entry3 = TickEntry {
-            date: "2023-07-01".to_string(),
-            task_id: 0,
-            hours: 1.25,
-            notes: "third entry".to_string(),
-        };
-
-        let tick_entry4 = TickEntry {
-            date: "2023-07-01".to_string(),
-            task_id: 1,
-            hours: 2.75,
-            notes: "fourth entry".to_string(),
-        };
-        
-        let mut tick_entry_list = TickEntryList {
-            tick_entries: vec![tick_entry1, tick_entry2, tick_entry3, tick_entry4],
-        };
-
-        assert_eq!(4, tick_entry_list.len());
-
-        tick_entry_list.merge();
-
-        assert_eq!(2, tick_entry_list.len());
-
-        let merged_entry1 = tick_entry_list.get(0);
-        assert_eq!(&"2023-07-01".to_string(), merged_entry1.get_date());
-        assert_eq!(&0, merged_entry1.get_task_id());
-        assert_eq!(&2.75, merged_entry1.get_hours());
-        assert_eq!(&"first entry, third entry".to_string(), merged_entry1.get_notes());
-
-        let merged_entry2 = tick_entry_list.get(1);
-        assert_eq!(&"2023-07-01".to_string(), merged_entry2.get_date());
-        assert_eq!(&1, merged_entry2.get_task_id());
-        assert_eq!(&4.75, merged_entry2.get_hours());
-        assert_eq!(&"second entry, fourth entry".to_string(), merged_entry2.get_notes());
-    }
-
-    #[test]
-    fn test_merge_tick_entries_equal_notes() {
-        let tick_entry1 = TickEntry {
-            date: "2023-07-01".to_string(),
-            task_id: 0,
-            hours: 1.5,
-            notes: "same notes".to_string(),
-        };
-
-        let tick_entry2 = TickEntry {
-            date: "2023-07-01".to_string(),
-            task_id: 0,
-            hours: 1.25,
-            notes: "same notes".to_string(),
-        };
-        
-        let mut tick_entry_list = TickEntryList {
-            tick_entries: vec![tick_entry1, tick_entry2],
-        };
-
-        tick_entry_list.merge();
-
-        let merged_entry = tick_entry_list.get(0);
-        assert_eq!(&"same notes".to_string(), merged_entry.get_notes());
     }
 }
