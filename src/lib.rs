@@ -113,6 +113,10 @@ impl Entry {
         &self.start_time
     }
 
+    pub fn get_end_time(&self) -> Option<&NaiveTime> {
+        self.end_time.as_ref()
+    }
+
     pub fn is_missing_end_time(&self) -> bool {
         self.end_time.is_none()
     }
@@ -127,12 +131,14 @@ impl Entry {
         task_id: Option<u32>,
         task_name: Option<String>,
         start_time: NaiveTime,
+        end_time: Option<NaiveTime>,
         notes: String,
     ) {
         self.project_name = project_name;
         self.task_id = task_id;
         self.task_name = task_name;
         self.start_time = start_time;
+        self.end_time = end_time;
         self.notes = notes;
     }
 

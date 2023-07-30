@@ -14,9 +14,14 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
     let project = select_project(config, entry.get_project_name());
     let mut task = None;
     if project.is_some() {
-        task = select_task(config, &project.as_ref().unwrap().get_id(), entry.get_task_name());
+        task = select_task(
+            config,
+            &project.as_ref().unwrap().get_id(),
+            entry.get_task_name(),
+        );
     }
     let start_time = input_start_time(entry.get_start_time());
+    let end_time = input_end_time(entry.get_end_time());
     let notes = input_notes(entry.get_notes());
 
     let project_name = match project {
@@ -25,11 +30,11 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
     };
     let (task_id, task_name) = match task {
         Some(task) => (Some(*task.get_id()), Some(task.get_name().clone())),
-        None => (None, None)
+        None => (None, None),
     };
 
     // Selecting no means gracefully termination.
-    if confirm_entry(&project_name, &task_name, &start_time, &notes) == false {
+    if confirm_entry(&project_name, &task_name, &start_time, end_time.as_ref(), &notes).is_none() {
         return Ok(());
     }
 
@@ -38,6 +43,7 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
         task_id,
         task_name,
         start_time,
+        end_time,
         notes,
     );
 
@@ -111,7 +117,21 @@ fn select_task(config: &Config, project_id: &u32, selected: Option<&String>) -> 
 fn input_start_time(start_time: &NaiveTime) -> NaiveTime {
     let initial = start_time.format("%H:%M").to_string();
 
-    input::time("Input start time", Some(&initial)).unwrap()
+    input::time("Input start time", Some(&initial), false).unwrap()
+}
+
+fn input_end_time(end_time: Option<&NaiveTime>) -> Option<NaiveTime> {
+    let mut formatted = String::new();
+    if end_time.is_some() {
+        formatted = end_time.unwrap().format("%H:%M").to_string();
+    }
+
+    let mut initial = None;
+    if formatted.is_empty() {
+        initial = Some(&formatted);
+    }
+
+    input::time("Input end time", initial, true)
 }
 
 fn input_notes(notes: &String) -> String {
@@ -122,17 +142,24 @@ fn confirm_entry(
     project_name: &Option<String>,
     task_name: &Option<String>,
     start_time: &NaiveTime,
+    end_time: Option<&NaiveTime>,
     notes: &String,
-) -> bool {
+) -> Option<bool> {
     println!("This will update the entry with the following data:");
 
     let empty_string = String::new();
     let project = match project_name.as_ref() { Some(p) => p, None => &empty_string };
     let task = match task_name.as_ref() { Some(t) => t, None => &empty_string };
+    let formatted_end_time = match end_time.as_ref() { 
+        Some(e) => e.format("%H:%M").to_string(),
+        None => empty_string.clone()
+    };
+
     println!("  Project: {}", project);
     println!("  Task: {}", task);
     println!("  Start Time: {}", start_time.format("%H:%M"));
+    println!("  End Time: {}", &formatted_end_time);
     println!("  Notes: {}", notes);
 
-    input::confirm("Continue?").unwrap()
+    input::confirm("Continue?")
 }

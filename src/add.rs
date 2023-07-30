@@ -16,6 +16,7 @@ pub fn add_entry(config: &Config) -> std::io::Result<()> {
         task = select_task(config, &project.as_ref().unwrap().get_id());
     }
     let start_time = input_start_time();
+    let end_time = input_end_time();
     let notes = input_notes();
 
     let project_name = match project {
@@ -28,7 +29,7 @@ pub fn add_entry(config: &Config) -> std::io::Result<()> {
     };
 
     // Selecting no means gracefully termination.
-    if confirm_entry(&project_name, &task_name, &start_time, &notes) == false {
+    if confirm_entry(&project_name, &task_name, &start_time, end_time.as_ref(), &notes).is_none() {
         return Ok(());
     }
 
@@ -37,7 +38,7 @@ pub fn add_entry(config: &Config) -> std::io::Result<()> {
         task_id,
         task_name,
         start_time,
-        None,
+        end_time,
         notes,
     ));
 
@@ -87,11 +88,11 @@ fn select_date() -> NaiveDate {
 }
 
 fn input_start_time() -> NaiveTime {
-    input::time("Input start time", None).unwrap()
+    input::time("Input start time", None, false).unwrap()
 }
 
-fn _input_end_time() -> NaiveTime {
-    input::time("Input start time", None).unwrap()
+fn input_end_time() -> Option<NaiveTime> {
+    input::time("Input end time", None, true)
 }
 
 fn input_notes() -> String {
@@ -102,17 +103,24 @@ fn confirm_entry(
     project_name: &Option<String>,
     task_name: &Option<String>,
     start_time: &NaiveTime,
+    end_time: Option<&NaiveTime>,
     notes: &String,
-) -> bool {
-    println!("This will create a entry with the following data:");
+) -> Option<bool> {
+    println!("This will add an entry with the following data:");
 
     let empty_string = String::new();
     let project = match project_name.as_ref() { Some(p) => p, None => &empty_string };
     let task = match task_name.as_ref() { Some(t) => t, None => &empty_string };
+    let formatted_end_time = match end_time.as_ref() { 
+        Some(e) => e.format("%H:%M").to_string(),
+        None => empty_string.clone()
+    };
+
     println!("  Project: {}",  project);
     println!("  Task: {}", task);
-    println!("  Start Time: {}", start_time);
+    println!("  Start Time: {}", start_time.format("%H:%M"));
+    println!("  End Time: {}", &formatted_end_time);
     println!("  Notes: {}", notes);
 
-    input::confirm("Continue?").unwrap()
+    input::confirm("Continue?")
 }

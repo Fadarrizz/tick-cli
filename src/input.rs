@@ -54,17 +54,22 @@ pub fn date(prompt: &str, default: Option<&String>) -> Option<NaiveDate> {
     Some(NaiveDate::parse_from_str(&date, "%Y-%m-%d").unwrap())
 }
 
-pub fn time(prompt: &str, default: Option<&String>) -> Option<NaiveTime> {
+pub fn time(prompt: &str, default: Option<&String>, opt: bool) -> Option<NaiveTime> {
     let theme = &ColorfulTheme::default();
     let mut input = Input::with_theme(theme);
 
     input
+        .allow_empty(opt)
         .with_prompt(prompt)
         .validate_with(|input: &String| -> Result<(), &str> {
+            if opt == true && input.is_empty() {
+                return Ok(());
+            }
+
             let time = NaiveTime::parse_from_str(&input, "%H:%M");
             match time {
-                Ok(_time) => Ok(()),
-                Err(_e) => Err("Wrong time format. Please provide a time like 9:15"),
+                Ok(_) => Ok(()),
+                Err(_) => Err("Wrong time format. Please provide a time like 9:15"),
             }
         });
 
@@ -76,7 +81,11 @@ pub fn time(prompt: &str, default: Option<&String>) -> Option<NaiveTime> {
 
     let time = input.interact().unwrap();
 
-    Some(NaiveTime::parse_from_str(&time, "%H:%M").unwrap())
+    if time.is_empty() {
+        None
+    } else {
+        Some(NaiveTime::parse_from_str(&time, "%H:%M").unwrap())
+    }
 }
 
 pub fn default(prompt: &str, default: Option<&String>) -> String {
@@ -95,12 +104,10 @@ pub fn default(prompt: &str, default: Option<&String>) -> String {
 }
 
 pub fn confirm(prompt: &str) -> Option<bool> {
-    Some(
-        Confirm::with_theme(&ColorfulTheme::default())
-            .with_prompt(prompt)
-            .default(true)
-            .wait_for_newline(true)
-            .interact()
-            .unwrap(),
-    )
+    Some(Confirm::with_theme(&ColorfulTheme::default())
+        .with_prompt(prompt)
+        .default(true)
+        .wait_for_newline(true)
+        .interact()
+        .unwrap())
 }
