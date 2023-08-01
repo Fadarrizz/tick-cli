@@ -32,3 +32,6 @@
         - entries filteren op project (alleen met project opsturen)
         - eindtijd bepalen (eind = start volgend entry)
         - uren berekenen (eind - start)
+
+- Results cachen
+- Internetconnectie checken
