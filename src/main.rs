@@ -73,7 +73,7 @@ fn edit(config: &Config) -> Result<bool> {
 fn submit(config: &Config) -> Result<bool> {
     check_auth(config);
 
-    Ok(submit::submit_entries(config).is_ok())
+    Ok(submit::submit(config).is_ok())
 }
 
 fn delete(config: &Config) -> Result<bool> {

@@ -48,6 +48,7 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
     );
 
     entries.sort();
+    entries.set_all_submitted(false);
 
     files::store_entry_list(entries, &filename).expect("Cannot store entry list");
 

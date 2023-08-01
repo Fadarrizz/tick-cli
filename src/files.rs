@@ -3,8 +3,7 @@ use std::io::ErrorKind;
 use std::io::Result;
 use std::path::PathBuf;
 use tick_cli::EntryList;
-
-extern crate dirs;
+use dirs;
 
 const BASE_DIR: &str = "Tick";
 

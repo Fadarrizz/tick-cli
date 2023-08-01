@@ -1,5 +1,4 @@
 use core::fmt;
-
 use chrono::{NaiveTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -216,11 +215,12 @@ impl fmt::Display for Entry {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct EntryList {
     entries: Vec<Entry>,
+    all_submitted: bool,
 }
 
 impl EntryList {
     pub fn empty() -> Self {
-        Self { entries: vec![] }
+        Self { entries: vec![], all_submitted: false }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -273,6 +273,14 @@ impl EntryList {
 
     pub fn remove(&mut self, index: usize) {
         self.entries.remove(index);
+    }
+
+    pub fn all_submitted(&self) -> bool {
+        self.all_submitted
+    }
+
+    pub fn set_all_submitted(&mut self, all_submitted: bool) {
+        self.all_submitted = all_submitted;
     }
 }
 

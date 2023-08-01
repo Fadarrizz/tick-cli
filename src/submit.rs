@@ -5,9 +5,14 @@ use tick_cli::{Entry, TickEntryList, EntryList, TickEntry};
 
 use crate::{files, input, api::{self, ApiError}, config::Config};
 
-pub fn submit_entries(config: &Config) -> std::io::Result<()> {
+pub fn submit(config: &Config) -> std::io::Result<()> {
     let filename = select_file().unwrap();
     let mut entries = files::load_entry_list(&filename).expect("Cannot load entries");
+
+    if entries.all_submitted() {
+        println!("Everything up-to-date");
+        return Ok(());
+    }
 
     set_entry_end_times(&mut entries);
 
@@ -15,9 +20,7 @@ pub fn submit_entries(config: &Config) -> std::io::Result<()> {
         return Ok(())
     }
 
-    submit(config, &filename, &TickEntryList::from_entry_list(&filename, &entries));
-    
-    println!("Succesfully submitted all entries.");
+    submit_entries(config, &filename, &TickEntryList::from_entry_list(&filename, &entries));
 
     Ok(())
 }
@@ -58,9 +61,10 @@ fn confirm_submit() -> Option<bool> {
     input::confirm("Are you sure you want to submit these entries?")
 }
 
-fn submit(config: &Config, filename: &String, tick_entries: &TickEntryList) {
+fn submit_entries(config: &Config, filename: &String, tick_entries: &TickEntryList) {
     let mut entries = EntryList::empty();
     let mut errors = Vec::new();
+    let mut submitted_count = 0;
 
     for tick_entry in tick_entries.get_all() {
         let mut entry = tick_entry.get_entry().unwrap().to_owned();
@@ -81,6 +85,7 @@ fn submit(config: &Config, filename: &String, tick_entries: &TickEntryList) {
             Ok(res_tick_entry) => {
                 entry.set_tick_id(res_tick_entry.get_id().unwrap());
                 entry.set_submitted_at();
+                submitted_count += 1;
             },
             Err(e) => errors.push((tick_entry.get_entry().unwrap(), e.message().clone()))
         };
@@ -88,12 +93,18 @@ fn submit(config: &Config, filename: &String, tick_entries: &TickEntryList) {
         entries.add(entry);
     }
 
+    if errors.is_empty() {
+        entries.set_all_submitted(true);
+    }
+
     files::store_entry_list(entries, &filename).expect("Unable to store entry list");
 
-    if !&errors.is_empty() {
+    if !errors.is_empty() {
         for (entry, message) in errors {
             println!("Couldn't send the following entry:\n {}\nError: {}", entry, message);
         }
         process::exit(1);
-    } 
+    }
+
+    println!("Submitted {} entries", submitted_count);
 }
