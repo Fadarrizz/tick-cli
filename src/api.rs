@@ -123,7 +123,10 @@ fn call<T: DeserializeOwned + Serialize + Clone>(
 ) -> Result<T, ApiError> {
     let client = match method {
         "GET" => Client::new().get(url),
-        _ => panic!(""),
+        "POST" => Client::new().post(url),
+        "PUT" => Client::new().put(url),
+        "DELETE" => Client::new().delete(url),
+        _ => panic!("Unknown http method encountered."),
     };
         
     let mut client = match config {
