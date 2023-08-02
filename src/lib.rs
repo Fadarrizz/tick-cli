@@ -23,7 +23,7 @@ impl Role {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct User {
     first_name: String,
 }
