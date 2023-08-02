@@ -2,7 +2,7 @@ use core::fmt;
 use chrono::{NaiveTime, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Role {
     subscription_id: u32,
     company: String,
