@@ -1,8 +1,8 @@
+use dialoguer::Validator;
 use reqwest::{blocking::Client, header};
 use serde::de::DeserializeOwned;
 use tick_cli::{Project, Role, Task, TickEntry, User};
-
-use crate::config::Config;
+use crate::{config::Config, cache::{self, ApiCacheValue}};
 
 const BASE_URL: &str = "https://secure.tickspot.com";
 const USER_AGENT: &str = "tick-cli (auke@ijsfontein.nl)";
@@ -16,6 +16,10 @@ pub struct ApiError {
 impl ApiError {
     pub fn is_unauthenticated_error(&self) -> bool {
         self.code == 401
+    }
+
+    pub fn not_modified(&self) -> bool {
+        self.code == 304
     }
 
     pub fn message(&self) -> &String {
@@ -118,11 +122,24 @@ pub fn delete_entry(config: &Config, id: u32) -> Result<TickEntry, ApiError> {
 }
 
 fn to_result<T: DeserializeOwned>(response: reqwest::blocking::Response) -> Result<T, ApiError> {
+    let mut cache = cache::Cache::new();
+
     match response.status().as_u16() {
         200..=299 => {
+            let validator = response.headers().get(header::ETAG)
+                .unwrap_or(response.headers().get(header::LAST_MODIFIED).unwrap());
+
+            let validator = validator.to_str().unwrap().to_string();
+            let value = response.text().unwrap().clone();
+            let url = response.url().clone();
+
+            let cache_value = ApiCacheValue::new(validator, value.to_string());
+
+            cache.set(url.to_string(), cache_value);
+
             return Ok(response.json().expect("Unable to convert response to json"));
         }
-        400..=499 => Err(ApiError {
+        300..=499 => Err(ApiError {
             code: response.status().as_u16(),
             message: response.text().unwrap(),
         }),
