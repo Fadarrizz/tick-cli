@@ -1,9 +1,7 @@
 use std::process;
-
 use chrono::NaiveTime;
 use tick_cli::{Entry, TickEntryList, EntryList, TickEntry};
-
-use crate::{files, input, api::{self, ApiError}, config::Config};
+use crate::{files, input, api, config::Config, http::HttpError};
 
 pub fn submit(config: &Config) -> std::io::Result<()> {
     let filename = select_file().unwrap();
@@ -74,7 +72,7 @@ fn submit_entries(config: &Config, filename: &String, tick_entries: &TickEntryLi
             continue;
         }
 
-        let response: Result<TickEntry, ApiError>;
+        let response: Result<TickEntry, HttpError>;
         if entry.should_be_updated() {
             response = api::update_entry(config, &tick_entry);
         } else {
