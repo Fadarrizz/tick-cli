@@ -8,6 +8,7 @@ use reqwest::{
 };
 use serde::{de::DeserializeOwned, Serialize};
 use std::process;
+use reqwest::header::{self};
 
 const USER_AGENT: &str = "tick-cli (auke@ijsfontein.nl)";
 
@@ -74,15 +75,15 @@ fn call<T: DeserializeOwned + Serialize + Clone>(
 ) -> Result<T, HttpError> {
     let mut cache = Cache::<T>::new();
 
-    let mut client = construct_client(method, url);
-    client = enable_auth(config, credentials, client);
-    client = set_headers(client, &cache, url);
+    let mut request = construct_request(method, url);
+    request = enable_auth(config, credentials, request);
+    request = set_headers(request, &cache, url);
 
     if let Some(body) = body {
-        client = client.json(body);
+        request = request.json(body);
     }
 
-    let response = client.send();
+    let response = request.send();
 
     if response.is_err() {
         println!("Error connecting to Tickspot.\nPlease check your internet connection.");
@@ -98,7 +99,7 @@ fn call<T: DeserializeOwned + Serialize + Clone>(
     handle_response(response.unwrap(), cache_option)
 }
 
-fn construct_client(method: Method, url: &String) -> RequestBuilder {
+fn construct_request(method: Method, url: &String) -> RequestBuilder {
     Client::new().request(method, url)
 }
 
@@ -117,22 +118,22 @@ fn enable_auth(
 }
 
 fn set_headers<T: DeserializeOwned + Serialize + Clone>(
-    client: RequestBuilder,
+    request: RequestBuilder,
     cache: &Cache<T>,
     url: &String,
 ) -> RequestBuilder {
-    let mut _client = client.header(header::USER_AGENT, USER_AGENT);
+    let mut _request = request.header(header::USER_AGENT, USER_AGENT);
 
     if let Some(cached_response) = cache.get(url.clone()) {
         if let Some(etag) = cached_response.get_etag() {
-            _client = _client.header(header::IF_NONE_MATCH, etag);
+            _request = _request.header(header::IF_NONE_MATCH, etag);
         }
         if let Some(last_modified) = cached_response.get_last_modified() {
-            _client = _client.header(header::IF_MODIFIED_SINCE, last_modified);
+            _request = _request.header(header::IF_MODIFIED_SINCE, last_modified);
         }
     }
 
-    _client
+    _request
 }
 
 fn handle_response<T: DeserializeOwned + Serialize + Clone>(
@@ -192,4 +193,3 @@ fn cache_response<T: DeserializeOwned + Serialize + Clone>(
 
     json
 }
-use reqwest::header::{self};
