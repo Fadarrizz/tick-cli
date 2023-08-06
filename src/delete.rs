@@ -1,10 +1,9 @@
 use tick_cli::{EntryList, Entry};
-
-use crate::{config::Config, files, input, api};
+use crate::{config::Config, files, input, api, repository};
 
 pub fn delete_entry(config: &Config) -> std::io::Result<()> {
     let filename = select_file().unwrap();
-    let entries: EntryList = files::load_entry_list(&filename).expect("Cannot load entries");
+    let entries = repository::load_entry_list(&filename).expect("Cannot load entries");
 
     let (index, entry) = select_entry(&entries).unwrap();
 
@@ -21,9 +20,9 @@ pub fn delete_entry(config: &Config) -> std::io::Result<()> {
     updated_entries.remove(index);
 
     if updated_entries.is_empty() {
-        files::delete_file(&filename).expect("Unable to delete file");
+        files::delete(&filename).expect("Unable to delete file");
     } else {
-        files::store_entry_list(updated_entries, &filename).expect("Unable to store entry list");
+        repository::store_entry_list(updated_entries, &filename).expect("Unable to store entry list");
     }
 
     println!("Entry succesfully removed");

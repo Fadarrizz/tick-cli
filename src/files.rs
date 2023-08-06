@@ -2,40 +2,21 @@ use std::fs;
 use std::io::ErrorKind;
 use std::io::Result;
 use std::path::PathBuf;
-use tick_cli::EntryList;
 use dirs;
 
 const BASE_DIR: &str = "Tick";
 
-pub fn load_entry_list(filename: &String) -> Result<EntryList> {
-    let data = fs::read_to_string(get_file_path(&filename)).unwrap_or_else(|error| {
-        if error.kind() == ErrorKind::NotFound {
-            String::new()
-        } else {
-            panic!("Problem opening the file: {:?}", error);
-        }
-    });
-
-    if data.is_empty() {
-        return Ok(EntryList::empty());
-    }
-
-    Ok(serde_json::from_str(data.as_str()).expect("Unable to parse file to json"))
+pub fn read(filename: &String) -> Result<String> {
+    fs::read_to_string(get_file_path(filename))
 }
 
-pub fn store_entry_list(entries: EntryList, filename: &String) -> Result<()> {
+pub fn write(filename: &String, content: String) -> Result<()> {
     ensure_base_dir_exists().unwrap();
 
-    fs::write(
-        get_file_path(&filename),
-        serde_json::to_string_pretty(&entries).expect("Cannot serialize entries"),
-    )
-    .expect("Cannot write to file");
-
-    Ok(())
+    fs::write(get_file_path(&filename), content)
 }
 
-pub fn delete_file(filename: &String) -> Result<()> {
+pub fn delete(filename: &String) -> Result<()> {
     fs::remove_file(get_file_path(filename)).expect("Cannot remove file");
 
     Ok(())

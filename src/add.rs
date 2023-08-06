@@ -1,14 +1,14 @@
 use std::process;
 use crate::api;
 use crate::config::Config;
-use crate::files;
 use crate::input;
+use crate::repository;
 use chrono::{NaiveDate, NaiveTime, Utc};
 use tick_cli::{Entry, EntryList, Project, Task};
 
 pub fn add_entry(config: &Config) -> std::io::Result<()> {
     let filename = select_date().format("%Y-%m-%d").to_string();
-    let mut entries: EntryList = files::load_entry_list(&filename).expect("Cannot load entries");
+    let mut entries: EntryList = repository::load_entry_list(&filename).expect("Cannot load entries");
 
     let project = select_project(config);
     let mut task = None;
@@ -42,7 +42,7 @@ pub fn add_entry(config: &Config) -> std::io::Result<()> {
         notes,
     ));
 
-    files::store_entry_list(entries, &filename).expect("Cannot store entry list");
+    repository::store_entry_list(entries, &filename).expect("Cannot store entry list");
 
     Ok(())
 }

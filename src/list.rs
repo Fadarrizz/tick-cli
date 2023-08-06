@@ -1,9 +1,8 @@
-use tick_cli::EntryList;
-use crate::{files, input};
+use crate::{files, input, repository};
 
 pub fn list_entries() -> std::io::Result<()> {
     let filename = select_file().unwrap();
-    let entries: EntryList = files::load_entry_list(&filename).expect("Cannot load entries");
+    let entries = repository::load_entry_list(&filename).expect("Cannot load entries");
 
     print!("{}", entries);
 

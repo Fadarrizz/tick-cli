@@ -18,6 +18,7 @@ mod submit;
 mod delete;
 mod cache;
 mod http;
+mod repository;
 
 fn main() {
     if let Err(e) = args::get().and_then(try_main) {

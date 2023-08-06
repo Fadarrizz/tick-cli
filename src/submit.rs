@@ -1,11 +1,11 @@
 use std::process;
 use chrono::NaiveTime;
 use tick_cli::{Entry, TickEntryList, EntryList, TickEntry};
-use crate::{files, input, api, config::Config, http::HttpError};
+use crate::{files, input, api, config::Config, http::HttpError, repository};
 
 pub fn submit(config: &Config) -> std::io::Result<()> {
     let filename = select_file().unwrap();
-    let mut entries = files::load_entry_list(&filename).expect("Cannot load entries");
+    let mut entries = repository::load_entry_list(&filename).expect("Cannot load entries");
 
     if entries.all_submitted() {
         println!("Everything up-to-date");
@@ -95,7 +95,7 @@ fn submit_entries(config: &Config, filename: &String, tick_entries: &TickEntryLi
         entries.set_all_submitted(true);
     }
 
-    files::store_entry_list(entries, &filename).expect("Unable to store entry list");
+    repository::store_entry_list(entries, &filename).expect("Unable to store entry list");
 
     if !errors.is_empty() {
         for (entry, message) in errors {

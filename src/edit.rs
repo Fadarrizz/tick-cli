@@ -1,13 +1,11 @@
 use std::process;
-
 use chrono::NaiveTime;
 use tick_cli::{Entry, EntryList, Project, Task};
-
-use crate::{api, config::Config, files, input};
+use crate::{api, config::Config, files, input, repository};
 
 pub fn edit_entry(config: &Config) -> std::io::Result<()> {
     let filename = select_file().unwrap();
-    let mut entries: EntryList = files::load_entry_list(&filename).expect("Cannot load entries");
+    let mut entries: EntryList = repository::load_entry_list(&filename).expect("Cannot load entries");
 
     let entry = select_entry(&mut entries).unwrap();
 
@@ -50,7 +48,7 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
     entries.sort();
     entries.set_all_submitted(false);
 
-    files::store_entry_list(entries, &filename).expect("Cannot store entry list");
+    repository::store_entry_list(entries, &filename).expect("Cannot store entry list");
 
     Ok(())
 }
