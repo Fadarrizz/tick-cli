@@ -10,10 +10,6 @@ pub fn fuzzy_select<T: ToString>(
     let theme = &ColorfulTheme::default();
     let mut select = FuzzySelect::with_theme(theme);
 
-    // if opt == true {
-    //     println!("Skip with <esc>");
-    // }
-
     select
         .with_prompt(prompt)
         .items(items);
