@@ -58,7 +58,7 @@ fn select_project(config: &Config) -> Option<Project> {
 
     let project_names: Vec<String> = projects.iter().map(|p| p.get_name().clone()).collect();
 
-    match input::fuzzy_select("Select a project", &project_names, None, true) {
+    match input::fuzzy_select("Select a project", &project_names, Some(0), true) {
         Some(index) => Some(projects[index].clone()),
         None => None,
     }
@@ -75,7 +75,7 @@ fn select_task(config: &Config, project_id: &u32) -> Option<Task> {
 
     let task_names: Vec<String> = tasks.iter().map(|t| t.get_name().clone()).collect();
 
-    match input::fuzzy_select("Select a task", &task_names, None, true) {
+    match input::fuzzy_select("Select a task", &task_names, Some(0), true) {
         Some(index) => Some(tasks[index].clone()),
         None => None,
     }
