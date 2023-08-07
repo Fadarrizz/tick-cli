@@ -1,5 +1,6 @@
-use std::{collections::HashMap, path::PathBuf, fs, io::ErrorKind};
+use std::collections::HashMap;
 use serde::{Serialize, Deserialize, de::DeserializeOwned};
+use crate::files;
 
 const FILENAME: &str = "cache.json";
 
@@ -34,7 +35,7 @@ pub struct Cache<T> {
 
 impl<T: DeserializeOwned + Serialize + Clone> Cache<T> {
     pub fn new() -> Self {
-        let map = match fs::read_to_string(get_cache_path()) {
+        let map = match files::read_from_cache(&FILENAME.to_string()) {
             Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| HashMap::new()), 
             Err(_) => HashMap::new()
         };
@@ -49,36 +50,9 @@ impl<T: DeserializeOwned + Serialize + Clone> Cache<T> {
     pub fn set(&mut self, key: String, cached_response: CachedResponse<T>) {
         self.map.insert(key, cached_response);
 
-        ensure_base_dir_exists().unwrap();
-
-        fs::write(
-            get_cache_path(),
+        files::write_to_cache(
+            &FILENAME.to_string(),
             serde_json::to_string(&self.map).unwrap(),
         ).expect("Failed to write to cache file");
-    }
-}
-
-fn get_cache_path() -> PathBuf {
-    let mut path = get_base_dir();
-
-    path.push(FILENAME);
-
-    path
-}
-
-fn get_base_dir() -> PathBuf {
-
-    let mut path = dirs::cache_dir().unwrap();
-
-    path.push("Tick");
-
-    path
-}
-
-fn ensure_base_dir_exists() -> Result<(), ErrorKind> {
-    match fs::create_dir(get_base_dir()) {
-        Ok(()) => Ok(()),
-        Err(e) if e.kind() == ErrorKind::AlreadyExists => Ok(()),
-        Err(_) => panic!("Cannot create base dir"),
     }
 }

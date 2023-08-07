@@ -6,24 +6,66 @@ use dirs;
 
 const BASE_DIR: &str = "Tick";
 
-pub fn read(filename: &String) -> Result<String> {
-    fs::read_to_string(get_file_path(filename))
+enum Dir {
+    Document,
+    Cache,
 }
 
-pub fn write(filename: &String, content: String) -> Result<()> {
-    ensure_base_dir_exists().unwrap();
+impl Dir {
+    fn base(&self) -> PathBuf {
+        let mut path = match self {
+            Self::Document => dirs::document_dir().expect("Default document dir not found"),
+            Self::Cache => dirs::cache_dir().expect("Default cache dir not found"),
+        };
 
-    fs::write(get_file_path(&filename), content)
+        path.push(BASE_DIR);
+
+        path
+    }
 }
 
-pub fn delete(filename: &String) -> Result<()> {
-    fs::remove_file(get_file_path(filename)).expect("Cannot remove file");
+pub fn read_from_documents(filename: &String) -> Result<String> {
+    read(&Dir::Document, filename)
+}
+
+pub fn read_from_cache(filename: &String) -> Result<String> {
+    read(&Dir::Cache, filename)
+}
+
+pub fn write_to_documents(filename: &String, content: String) -> Result<()> {
+    write(&Dir::Document, filename, content)
+}
+
+pub fn write_to_cache(filename: &String, content: String) -> Result<()> {
+    write(&Dir::Cache, filename, content)
+}
+
+pub fn delete_documents(filename: &String) -> Result<()> {
+    delete(&Dir::Document, filename)
+}
+
+fn read(dir: &Dir, filename: &String) -> Result<String> {
+    fs::read_to_string(get_file_path(dir, filename))
+}
+
+fn write(dir: &Dir, filename: &String, content: String) -> Result<()> {
+    ensure_base_dir_exists(dir).unwrap();
+
+    fs::write(get_file_path(dir, filename), content)
+}
+
+fn delete(dir: &Dir, filename: &String) -> Result<()> {
+    fs::remove_file(get_file_path(dir, filename)).expect("Cannot remove file");
 
     Ok(())
 }
 
-pub fn get_existing_file_names() -> Vec<String> {
-    let mut file_names = fs::read_dir(get_base_dir())
+pub fn get_document_file_names() -> Vec<String> {
+    get_existing_file_names(&Dir::Document)
+}
+
+fn get_existing_file_names(dir: &Dir) -> Vec<String> {
+    let mut file_names = fs::read_dir(dir.base())
         .unwrap()
         .filter_map(|file| {
             file.ok().and_then(|e| {
@@ -39,8 +81,8 @@ pub fn get_existing_file_names() -> Vec<String> {
     file_names
 }
 
-fn get_file_path(filename: &String) -> PathBuf {
-    let mut path = get_base_dir();
+fn get_file_path(dir: &Dir, filename: &String) -> PathBuf {
+    let mut path = dir.base();
 
     path.push(filename);
     path.set_extension("json");
@@ -48,16 +90,8 @@ fn get_file_path(filename: &String) -> PathBuf {
     path
 }
 
-fn get_base_dir() -> PathBuf {
-    let mut path: PathBuf = dirs::document_dir().unwrap();
-
-    path.push(BASE_DIR);
-
-    path
-}
-
-fn ensure_base_dir_exists() -> Result<()> {
-    match fs::create_dir(get_base_dir()) {
+fn ensure_base_dir_exists(dir: &Dir) -> Result<()> {
+    match fs::create_dir(dir.base()) {
         Ok(()) => Ok(()),
         Err(e) if e.kind() == ErrorKind::AlreadyExists => Ok(()),
         Err(_) => panic!("Cannot create base dir"),

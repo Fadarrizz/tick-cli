@@ -1,7 +1,7 @@
-use std::process;
+use crate::{api, config::Config, http::HttpError, input, repository};
 use chrono::NaiveTime;
-use tick_cli::{Entry, TickEntryList, EntryList, TickEntry};
-use crate::{files, input, api, config::Config, http::HttpError, repository};
+use std::process;
+use tick_cli::{Entry, EntryList, TickEntry, TickEntryList};
 
 pub fn submit(config: &Config) -> std::io::Result<()> {
     let filename = select_file().unwrap();
@@ -15,16 +15,20 @@ pub fn submit(config: &Config) -> std::io::Result<()> {
     set_entry_end_times(&mut entries);
 
     if confirm_submit().is_none() {
-        return Ok(())
+        return Ok(());
     }
 
-    submit_entries(config, &filename, &TickEntryList::from_entry_list(&filename, &entries));
+    submit_entries(
+        config,
+        &filename,
+        &TickEntryList::from_entry_list(&filename, &entries),
+    );
 
     Ok(())
 }
 
 fn select_file() -> Option<String> {
-    let existing_files = files::get_existing_file_names();
+    let existing_files = repository::get_entry_lists_by_filename();
 
     match input::fuzzy_select("Select a date", &existing_files, Some(0), false) {
         Some(index) => Some(existing_files[index].clone()),
@@ -77,15 +81,15 @@ fn submit_entries(config: &Config, filename: &String, tick_entries: &TickEntryLi
             response = api::update_entry(config, &tick_entry);
         } else {
             response = api::create_entry(config, &tick_entry);
-        } 
+        }
 
         match response {
             Ok(res_tick_entry) => {
                 entry.set_tick_id(res_tick_entry.get_id().unwrap());
                 entry.set_submitted_at();
                 submitted_count += 1;
-            },
-            Err(e) => errors.push((tick_entry.get_entry().unwrap(), e.message().clone()))
+            }
+            Err(e) => errors.push((tick_entry.get_entry().unwrap(), e.message().clone())),
         };
 
         entries.add(entry);
@@ -99,7 +103,10 @@ fn submit_entries(config: &Config, filename: &String, tick_entries: &TickEntryLi
 
     if !errors.is_empty() {
         for (entry, message) in errors {
-            println!("Couldn't send the following entry:\n {}\nError: {}", entry, message);
+            println!(
+                "Couldn't send the following entry:\n {}\nError: {}",
+                entry, message
+            );
         }
         process::exit(1);
     }

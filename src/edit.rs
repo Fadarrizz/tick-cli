@@ -1,7 +1,7 @@
 use std::process;
 use chrono::NaiveTime;
 use tick_cli::{Entry, EntryList, Project, Task};
-use crate::{api, config::Config, files, input, repository};
+use crate::{api, config::Config, input, repository};
 
 pub fn edit_entry(config: &Config) -> std::io::Result<()> {
     let filename = select_file().unwrap();
@@ -54,7 +54,7 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
 }
 
 fn select_file() -> Option<String> {
-    let existing_files = files::get_existing_file_names();
+    let existing_files = repository::get_entry_lists_by_filename();
 
     match input::fuzzy_select("Select a date", &existing_files, Some(0), false) {
         Some(index) => Some(existing_files[index].clone()),

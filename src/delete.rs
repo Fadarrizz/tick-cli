@@ -1,5 +1,5 @@
 use tick_cli::{EntryList, Entry};
-use crate::{config::Config, files, input, api, repository};
+use crate::{config::Config, input, api, repository};
 
 pub fn delete_entry(config: &Config) -> std::io::Result<()> {
     let filename = select_file().unwrap();
@@ -20,7 +20,7 @@ pub fn delete_entry(config: &Config) -> std::io::Result<()> {
     updated_entries.remove(index);
 
     if updated_entries.is_empty() {
-        files::delete(&filename).expect("Unable to delete file");
+        repository::delete_entry_list(&filename).expect("Unable to delete file");
     } else {
         repository::store_entry_list(updated_entries, &filename).expect("Unable to store entry list");
     }
@@ -31,7 +31,7 @@ pub fn delete_entry(config: &Config) -> std::io::Result<()> {
 }
 
 fn select_file() -> Option<String> {
-    let existing_files = files::get_existing_file_names();
+    let existing_files = repository::get_entry_lists_by_filename();
 
     match input::fuzzy_select("Select a date", &existing_files, Some(0), false) {
         Some(index) => Some(existing_files[index].clone()),

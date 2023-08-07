@@ -10,7 +10,7 @@ pub fn list_entries() -> std::io::Result<()> {
 }
 
 fn select_file() -> Option<String> {
-    let existing_files = files::get_existing_file_names();
+    let existing_files = files::get_document_file_names();
 
     match input::fuzzy_select("Select a date", &existing_files, Some(0), false) {
         Some(index) => Some(existing_files[index].clone()),
