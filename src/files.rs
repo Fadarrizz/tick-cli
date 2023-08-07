@@ -55,9 +55,7 @@ fn write(dir: &Dir, filename: &String, content: String) -> Result<()> {
 }
 
 fn delete(dir: &Dir, filename: &String) -> Result<()> {
-    fs::remove_file(get_file_path(dir, filename)).expect("Cannot remove file");
-
-    Ok(())
+    fs::remove_file(get_file_path(dir, filename))
 }
 
 pub fn get_document_file_names() -> Vec<String> {
