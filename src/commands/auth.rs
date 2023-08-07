@@ -1,9 +1,14 @@
 use std::process;
-
 use dialoguer::{Input, theme::ColorfulTheme, Password, console::style};
 use tick_cli::Role;
-
 use crate::{api, config::Config};
+
+pub fn check(config: &Config) {
+    if config.missing_api_key() {
+        println!("To get started with Tick CLI, please run {}", style("tick login").bold());
+        process::exit(1)
+    }
+}
 
 pub fn login(config: &mut Config) -> std::io::Result<()> {
     let email = Input::with_theme(&ColorfulTheme::default())
