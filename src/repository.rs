@@ -3,7 +3,7 @@ use tick_cli::EntryList;
 use crate::files;
 
 pub fn get_entry_lists_by_filename() -> Vec<String> {
-    files::get_document_file_names(None)
+    files::get_document_file_names()
 }
 
 pub fn load_entry_list(filename: &String) -> Result<EntryList, ErrorKind> {
