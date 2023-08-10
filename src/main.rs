@@ -9,7 +9,7 @@ mod config;
 mod args;
 mod files;
 mod api;
-mod input;
+mod ui;
 mod cache;
 mod http;
 mod repository;

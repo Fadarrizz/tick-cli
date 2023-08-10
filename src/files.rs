@@ -58,12 +58,18 @@ fn delete(dir: &Dir, filename: &String) -> Result<()> {
     fs::remove_file(get_file_path(dir, filename))
 }
 
-pub fn get_document_file_names() -> Vec<String> {
+pub fn get_document_file_names(path: Option<&PathBuf>) -> Vec<String> {
+    let mut _path = &Dir::Document.base();
+
+    if let Some(path) = path {
+        _path.push(path);
+    }
+
     get_existing_file_names(&Dir::Document)
 }
 
-fn get_existing_file_names(dir: &Dir) -> Vec<String> {
-    let mut file_names = fs::read_dir(dir.base())
+pub fn get_existing_file_names(path: &PathBuf) -> Vec<String> {
+    let mut file_names = fs::read_dir(path)
         .unwrap()
         .filter_map(|file| {
             file.ok().and_then(|e| {
