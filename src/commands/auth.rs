@@ -3,7 +3,7 @@ use dialoguer::{Input, theme::ColorfulTheme, Password, console::style};
 use tick_cli::Role;
 use crate::{api, config::Config};
 
-pub fn check(config: &Config) {
+pub fn check_auth(config: &Config) {
     if config.missing_api_key() {
         println!("To get started with Tick CLI, please run {}", style("tick login").bold());
         process::exit(1)

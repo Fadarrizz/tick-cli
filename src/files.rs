@@ -58,14 +58,22 @@ fn delete(dir: &Dir, filename: &String) -> Result<()> {
     fs::remove_file(get_file_path(dir, filename))
 }
 
+pub fn get_document_file_path(child: Option<&String>) -> PathBuf {
+    if let Some(child) = child {
+        return get_file_path(&Dir::Document, child);
+    } 
+    
+    Dir::Document.base()
+}
+
 pub fn get_document_file_names(path: Option<&PathBuf>) -> Vec<String> {
-    let mut _path = &Dir::Document.base();
+    let mut path_buf = &Dir::Document.base();
 
     if let Some(path) = path {
-        _path.push(path);
+        path_buf.push(path);
     }
 
-    get_existing_file_names(&Dir::Document)
+    get_existing_file_names(path_buf)
 }
 
 pub fn get_existing_file_names(path: &PathBuf) -> Vec<String> {
@@ -85,13 +93,20 @@ pub fn get_existing_file_names(path: &PathBuf) -> Vec<String> {
     file_names
 }
 
-fn get_file_path(dir: &Dir, filename: &String) -> PathBuf {
-    let mut path = dir.base();
+pub fn is_file(path: &PathBuf) -> bool {
+    path.as_path().is_file()
+}
 
-    path.push(filename);
-    path.set_extension("json");
+fn get_file_path(dir: &Dir, child: &String) -> PathBuf {
+    let mut path_buf = dir.base();
 
-    path
+    path_buf.push(child);
+
+    if path_buf.as_path().is_file() {
+        path_buf.set_extension("json");
+    }
+
+    path_buf
 }
 
 fn ensure_base_dir_exists(dir: &Dir) -> Result<()> {
