@@ -66,16 +66,6 @@ pub fn get_document_file_path(child: Option<&String>) -> PathBuf {
     Dir::Document.base()
 }
 
-pub fn get_document_file_names(path: Option<&PathBuf>) -> Vec<String> {
-    let mut path_buf = &Dir::Document.base();
-
-    if let Some(path) = path {
-        path_buf.push(path);
-    }
-
-    get_existing_file_names(path_buf)
-}
-
 pub fn get_existing_file_names(path: &PathBuf) -> Vec<String> {
     let mut file_names = fs::read_dir(path)
         .unwrap()

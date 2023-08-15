@@ -1,10 +1,10 @@
-use crate::{api, config::Config, http::HttpError, input, repository};
+use crate::{api, config::Config, http::HttpError, repository, ui};
 use chrono::NaiveTime;
 use std::process;
 use tick_cli::{Entry, EntryList, TickEntry, TickEntryList};
 
 pub fn submit(config: &Config) -> std::io::Result<()> {
-    let filename = select_file().unwrap();
+    let filename = ui::select_file();
     let mut entries = repository::load_entry_list(&filename).expect("Cannot load entries");
 
     if entries.all_submitted() {
@@ -27,15 +27,6 @@ pub fn submit(config: &Config) -> std::io::Result<()> {
     Ok(())
 }
 
-fn select_file() -> Option<String> {
-    let existing_files = repository::get_entry_lists_by_filename();
-
-    match input::fuzzy_select("Select a date", &existing_files, Some(0), false) {
-        Some(index) => Some(existing_files[index].clone()),
-        None => panic!("Nothing selected"),
-    }
-}
-
 fn set_entry_end_times(entries: &mut EntryList) {
     let last_entry = entries.get_last().unwrap();
     if last_entry.is_missing_end_time() {
@@ -56,11 +47,11 @@ fn set_last_entry_end_time(entry: &mut Entry) {
 }
 
 fn input_end_time() -> NaiveTime {
-    input::time("Input end time", None, false).unwrap()
+    ui::time("Input end time", None, false).unwrap()
 }
 
 fn confirm_submit() -> Option<bool> {
-    input::confirm("Are you sure you want to submit these entries?")
+    ui::confirm("Are you sure you want to submit these entries?")
 }
 
 fn submit_entries(config: &Config, filename: &String, tick_entries: &TickEntryList) {

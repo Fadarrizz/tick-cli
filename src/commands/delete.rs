@@ -1,8 +1,8 @@
 use tick_cli::{EntryList, Entry};
-use crate::{config::Config, input, api, repository};
+use crate::{config::Config, api, repository, ui};
 
 pub fn delete_entry(config: &Config) -> std::io::Result<()> {
-    let filename = select_file().unwrap();
+    let filename = ui::select_file();
     let entries = repository::load_entry_list(&filename).expect("Cannot load entries");
 
     let (index, entry) = select_entry(&entries).unwrap();
@@ -30,24 +30,15 @@ pub fn delete_entry(config: &Config) -> std::io::Result<()> {
     Ok(())
 }
 
-fn select_file() -> Option<String> {
-    let existing_files = repository::get_entry_lists_by_filename();
-
-    match input::fuzzy_select("Select a date", &existing_files, Some(0), false) {
-        Some(index) => Some(existing_files[index].clone()),
-        None => panic!("Nothing selected"),
-    }
-}
-
 fn select_entry(entry_list: &EntryList) -> Option<(usize, &Entry)> {
     let entries = entry_list.get_all();
 
-    match input::fuzzy_select("Select an entry", entries, Some(0), false) {
+    match ui::fuzzy_select("Select an entry", entries, Some(0), false) {
         Some(index) => Some((index.clone(), entry_list.get(index))),
         None => panic!("Nothing selected"),
     }
 }
 
 fn confirm_deletion() -> Option<bool> {
-    input::confirm("Are you sure you want to delete this entry?")
+    ui::confirm("Are you sure you want to delete this entry?")
 }

@@ -1,10 +1,10 @@
 use std::process;
 use chrono::NaiveTime;
 use tick_cli::{Entry, EntryList, Project, Task};
-use crate::{api, config::Config, input, repository};
+use crate::{api, config::Config, repository, ui};
 
 pub fn edit_entry(config: &Config) -> std::io::Result<()> {
-    let filename = select_file().unwrap();
+    let filename = ui::select_file();
     let mut entries: EntryList = repository::load_entry_list(&filename).expect("Cannot load entries");
 
     let entry = select_entry(&mut entries).unwrap();
@@ -53,19 +53,10 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
     Ok(())
 }
 
-fn select_file() -> Option<String> {
-    let existing_files = repository::get_entry_lists_by_filename();
-
-    match input::fuzzy_select("Select a date", &existing_files, Some(0), false) {
-        Some(index) => Some(existing_files[index].clone()),
-        None => None,
-    }
-}
-
 fn select_entry(entry_list: &mut EntryList) -> Option<&mut Entry> {
     let entries = entry_list.get_all();
 
-    match input::fuzzy_select("Select an entry", entries, Some(0), false) {
+    match ui::fuzzy_select("Select an entry", entries, Some(0), false) {
         Some(index) => Some(entry_list.get_mut(index)),
         None => panic!("Nothing selected"),
     }
@@ -86,7 +77,7 @@ fn select_project(config: &Config, selected: Option<&String>) -> Option<Project>
         selected_index = project_names.iter().position(|n| n == selected.unwrap());
     }
 
-    match input::fuzzy_select("Select a project", &project_names, selected_index, true) {
+    match ui::fuzzy_select("Select a project", &project_names, selected_index, true) {
         Some(index) => Some(projects[index].clone()),
         None => None,
     }
@@ -107,7 +98,7 @@ fn select_task(config: &Config, project_id: &u32, selected: Option<&String>) -> 
         selected_index = task_names.iter().position(|n| n == selected.unwrap());
     }
 
-    match input::fuzzy_select("Select a task", &task_names, selected_index, true) {
+    match ui::fuzzy_select("Select a task", &task_names, selected_index, true) {
         Some(index) => Some(tasks[index].clone()),
         None => None,
     }
@@ -116,7 +107,7 @@ fn select_task(config: &Config, project_id: &u32, selected: Option<&String>) -> 
 fn input_start_time(start_time: &NaiveTime) -> NaiveTime {
     let initial = start_time.format("%H:%M").to_string();
 
-    input::time("Input start time", Some(&initial), false).unwrap()
+    ui::time("Input start time", Some(&initial), false).unwrap()
 }
 
 fn input_end_time(end_time: Option<&NaiveTime>) -> Option<NaiveTime> {
@@ -130,11 +121,11 @@ fn input_end_time(end_time: Option<&NaiveTime>) -> Option<NaiveTime> {
         initial = Some(&formatted);
     }
 
-    input::time("Input end time", initial, true)
+    ui::time("Input end time", initial, true)
 }
 
 fn input_notes(notes: &String) -> String {
-    input::default("Input notes", Some(notes))
+    ui::default("Input notes", Some(notes))
 }
 
 fn confirm_entry(
@@ -160,5 +151,5 @@ fn confirm_entry(
     println!("  End Time: {}", &formatted_end_time);
     println!("  Notes: {}", notes);
 
-    input::confirm("Continue?")
+    ui::confirm("Continue?")
 }

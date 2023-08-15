@@ -1,7 +1,6 @@
 use std::process;
-use crate::api;
+use crate::{api, ui};
 use crate::config::Config;
-use crate::input;
 use crate::repository;
 use chrono::{NaiveDate, NaiveTime, Utc};
 use tick_cli::{Entry, EntryList, Project, Task};
@@ -58,7 +57,7 @@ fn select_project(config: &Config) -> Option<Project> {
 
     let project_names: Vec<String> = projects.iter().map(|p| p.get_name().clone()).collect();
 
-    match input::fuzzy_select("Select a project", &project_names, Some(0), true) {
+    match ui::fuzzy_select("Select a project", &project_names, Some(0), true) {
         Some(index) => Some(projects[index].clone()),
         None => None,
     }
@@ -75,7 +74,7 @@ fn select_task(config: &Config, project_id: &u32) -> Option<Task> {
 
     let task_names: Vec<String> = tasks.iter().map(|t| t.get_name().clone()).collect();
 
-    match input::fuzzy_select("Select a task", &task_names, Some(0), true) {
+    match ui::fuzzy_select("Select a task", &task_names, Some(0), true) {
         Some(index) => Some(tasks[index].clone()),
         None => None,
     }
@@ -84,19 +83,19 @@ fn select_task(config: &Config, project_id: &u32) -> Option<Task> {
 fn select_date() -> NaiveDate {
     let initial_text = Utc::now().format("%Y-%m-%d").to_string();
     
-    input::date("Select a date", Some(&initial_text)).unwrap()
+    ui::date("Select a date", Some(&initial_text)).unwrap()
 }
 
 fn input_start_time() -> NaiveTime {
-    input::time("Input start time", None, false).unwrap()
+    ui::time("Input start time", None, false).unwrap()
 }
 
 fn input_end_time() -> Option<NaiveTime> {
-    input::time("Input end time", None, true)
+    ui::time("Input end time", None, true)
 }
 
 fn input_notes() -> String {
-    input::default("Input notes", None)
+    ui::default("Input notes", None)
 }
 
 fn confirm_entry(
@@ -122,5 +121,5 @@ fn confirm_entry(
     println!("  End Time: {}", &formatted_end_time);
     println!("  Notes: {}", notes);
 
-    input::confirm("Continue?")
+    ui::confirm("Continue?")
 }
