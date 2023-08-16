@@ -1,23 +1,35 @@
-use crate::files::{self, get_document_file_path};
+use std::path::PathBuf;
+
+use crate::files;
 use super::input;
 
-pub fn select_file() -> String {
-    let mut path = get_document_file_path(None);
-    let mut selected = String::new();
+pub fn select_file() -> PathBuf {
+    let mut path = files::get_document_file_path(None, None);
 
+    // Year
+    path = files::get_document_file_path(
+        Some(path),
+        Some(&select(files::get_file_names(&path))),
+    );
 
-    while !files::is_file(&path) {
-        let existing_files = files::get_existing_file_names(&path);
+    // Month
+    path = files::get_document_file_path(
+        Some(path),
+        Some(&select(files::get_file_names(&path))),
+    );
 
-        selected = match input::fuzzy_select("Select a date", &existing_files, Some(0), false) {
-            Some(index) => existing_files[index].clone(),
-            None => panic!("Nothing selected"),
-        };
+    // File
+    path = files::get_document_file_path(
+        Some(path),
+        Some(&select(files::get_file_names(&path))),
+    );
 
-        path.push(selected.clone());
+    path
+}
 
-        dbg!(&path);
+fn select(file_names: Vec<String>) -> String {
+    match input::fuzzy_select("Select a date", &file_names, Some(0), false) {
+        Some(index) => file_names[index].clone(),
+        None => panic!("Nothing selected"),
     }
-
-    selected
 }
