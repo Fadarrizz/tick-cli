@@ -1,6 +1,6 @@
 use std::fs;
 use std::io::ErrorKind;
-use std::io::Result;
+use std::result::Result;
 use std::path::PathBuf;
 use dirs;
 
@@ -24,38 +24,58 @@ impl Dir {
     }
 }
 
-pub fn read_from_documents(filename: &String) -> Result<String> {
-    read(get_file_path(&Dir::Document , None, Some(filename)))
+pub fn read_from_documents(path: &PathBuf) -> Result<String, &'static str> {
+    if !ensure_path_has_base(&Dir::Document, path) {
+        return Err("Path doesn't start with document dir");
+    }
+
+    read(path)
 }
 
-pub fn read_from_cache(filename: &String) -> Result<String> {
-    read(get_file_path(&Dir::Cache , None, Some(filename)))
+pub fn read_from_cache(path: &PathBuf) -> Result<String, &'static str> {
+    if !ensure_path_has_base(&Dir::Cache, path) {
+        return Err("Path doesn't start with cache dir");
+    }
+
+    read(path)
 }
 
-pub fn write_to_documents(filename: &String, content: String) -> Result<()> {
-    write(&Dir::Document, filename, content)
+pub fn write_to_documents(path: &PathBuf, content: String) -> Result<(), &'static str> {
+    if !ensure_path_has_base(&Dir::Document, path) {
+        return Err("Path doesn't start with document dir");
+    }
+
+    write(path, content)
 }
 
-pub fn write_to_cache(filename: &String, content: String) -> Result<()> {
-    write(&Dir::Cache, filename, content)
+pub fn write_to_cache(path: &PathBuf, content: String) -> Result<(), &'static str> {
+    if !ensure_path_has_base(&Dir::Cache, path) {
+        return Err("Path doesn't start with cache dir");
+    }
+
+    write(path, content)
 }
 
-pub fn delete_documents(filename: &String) -> Result<()> {
-    delete(&Dir::Document, filename)
+pub fn delete_documents(path: &PathBuf) -> Result<(), &'static str> {
+    if !ensure_path_has_base(&Dir::Document, path) {
+        return Err("Path doesn't start with document dir");
+    }
+
+    delete(path)
 }
 
-fn read(file: PathBuf) -> Result<String> {
+fn read(file: &PathBuf) -> std::io::Result<String> {
     fs::read_to_string(file)
 }
 
-fn write(path: PathBuf, content: String) -> Result<()> {
+fn write(path: PathBuf, content: String) -> std::io::Result<()> {
     ensure_path_exists(&path).unwrap();
 
-    fs::write(get_file_path(dir, None, Some(filename)), content)
+    fs::write(path, content)
 }
 
-fn delete(dir: &Dir, filename: &String) -> Result<()> {
-    fs::remove_file(get_file_path(dir, None, Some(filename)))
+fn delete(path: PathBuf) -> std::io::Result<()> {
+    fs::remove_file(path)
 }
 
 pub fn get_document_file_path(path: Option<PathBuf>, child: Option<&String>) -> PathBuf {
@@ -79,7 +99,7 @@ pub fn get_file_names(path: &PathBuf) -> Vec<String> {
     file_names
 }
 
-fn get_file_path(dir: Option<&Dir>, path: Option<PathBuf>, child: Option<&String>) -> Result<PathBuf> {
+fn get_file_path(dir: Option<&Dir>, path: Option<PathBuf>, child: Option<&String>) -> Result<PathBuf, &'static str> {
     let mut path_buf;
 
     match (dir, path) {
@@ -109,14 +129,14 @@ fn get_file_path(dir: Option<&Dir>, path: Option<PathBuf>, child: Option<&String
     Ok(path_buf)
 }
 
-fn ensure_path_exists(path: &PathBuf) -> Result<()> {
+fn ensure_path_has_base(dir: &Dir, path: &PathBuf) -> bool {
+    path.as_path().starts_with(dir.base())
+}
+
+fn ensure_path_exists(path: &PathBuf) -> Result<(), &'static str> {
     match fs::create_dir(path) {
         Ok(()) => Ok(()),
         Err(e) if e.kind() == ErrorKind::AlreadyExists => Ok(()),
         Err(_) => panic!("Cannot create base dir"),
     }
-}
-
-fn path_by_file_name(file_name: &String) -> PathBuf {
-    
 }

@@ -1,4 +1,4 @@
-use std::io::ErrorKind;
+use std::{io::ErrorKind, path::PathBuf};
 use tick_cli::EntryList;
 use crate::files;
 
@@ -6,8 +6,8 @@ use crate::files;
 //     files::get_document_file_names()
 // }
 
-pub fn load_entry_list(filename: &String) -> Result<EntryList, ErrorKind> {
-    let data = files::read_from_documents(filename).unwrap_or_else(|error| {
+pub fn load_entry_list(path: PathBuf) -> Result<EntryList, ErrorKind> {
+    let data = files::read_from_documents(path).unwrap_or_else(|error| {
         if error.kind() == ErrorKind::NotFound {
             String::new()
         } else {
