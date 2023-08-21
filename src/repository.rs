@@ -1,13 +1,20 @@
 use std::{io::ErrorKind, path::PathBuf};
 use tick_cli::EntryList;
-use crate::files;
+use crate::files::{self, FileError};
 
-// pub fn get_entry_lists_by_filename() -> Vec<String> {
-//     files::get_document_file_names()
-// }
+pub fn load_entry_list(path: PathBuf) -> Result<EntryList, FileError> {
+    let data = files::read_from_documents(&path).unwrap_or_else(|error| {
+        if let FileError::FileError(error) = error {
+            return Err(error);
+        };
 
-pub fn load_entry_list(path: PathBuf) -> Result<EntryList, ErrorKind> {
-    let data = files::read_from_documents(path).unwrap_or_else(|error| {
+        match error {
+            FileError::IoError(error) => Ok(l),
+            FileError::FileError(error) => Err(error),
+            _ => panic!("Problem opening the file: {:?}", error),
+
+        }
+
         if error.kind() == ErrorKind::NotFound {
             String::new()
         } else {
