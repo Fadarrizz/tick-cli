@@ -3,35 +3,26 @@ use tick_cli::EntryList;
 use crate::files::{self, FileError};
 
 pub fn load_entry_list(path: PathBuf) -> Result<EntryList, FileError> {
-    let data = files::read_from_documents(&path).unwrap_or_else(|error| {
-        if let FileError::FileError(error) = error {
-            return Err(error);
-        };
-
-        match error {
-            FileError::IoError(error) => Ok(l),
-            FileError::FileError(error) => Err(error),
-            _ => panic!("Problem opening the file: {:?}", error),
-
+    match files::read_from_documents(&path) {
+        Ok(data) => {
+            Ok(serde_json::from_str(data.as_str()).expect("Unable to parse file to json"))
+        },
+        Err(error) => match error {
+            FileError::FileError(err) => Err(error),
+            FileError::IoError(io_err) => {
+                if io_err.kind() == ErrorKind::NotFound {
+                    Ok(EntryList::empty())
+                } else {
+                    panic!("Problem opening the file: {:?}", io_err);
+                }
+            }
         }
-
-        if error.kind() == ErrorKind::NotFound {
-            String::new()
-        } else {
-            panic!("Problem opening the file: {:?}", error);
-        }
-    });
-
-    if data.is_empty() {
-        return Ok(EntryList::empty());
     }
-
-    Ok(serde_json::from_str(data.as_str()).expect("Unable to parse file to json"))
 }
 
-pub fn store_entry_list(entries: EntryList, filename: &String) -> Result<(), ErrorKind> {
+pub fn store_entry_list(entries: EntryList, path: &PathBuf) -> Result<(), ErrorKind> {
     files::write_to_documents(
-        filename,
+        path,
         serde_json::to_string_pretty(&entries).expect("Cannot serialize entries"),
     )
     .expect("Cannot write to file");
@@ -39,8 +30,8 @@ pub fn store_entry_list(entries: EntryList, filename: &String) -> Result<(), Err
     Ok(())
 }
 
-pub fn delete_entry_list(filename: &String) -> Result<(), ErrorKind> {
-    files::delete_documents(filename).expect("Unable to delete file");
+pub fn delete_entry_list(path: PathBuf) -> Result<(), ErrorKind> {
+    files::delete_documents(path).expect("Unable to delete file");
     
     Ok(())
 }

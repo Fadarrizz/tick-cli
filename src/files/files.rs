@@ -6,6 +6,7 @@ use dirs;
 
 const BASE_DIR: &str = "Tick";
 
+#[derive(Debug)]
 pub enum FileError {
     IoError(std::io::Error),
     FileError(&'static str),
