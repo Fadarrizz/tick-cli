@@ -347,12 +347,12 @@ pub struct TickEntryList {
 }
 
 impl TickEntryList {
-    pub fn from_entry_list(filename: &String, entry_list: &EntryList) -> Self {
+    pub fn from_entry_list(date: &String, entry_list: &EntryList) -> Self {
         let tick_entries = entry_list
         .get_all()
         .iter()
         .filter(|entry| entry.get_task_id().is_some())
-        .map(|entry| TickEntry::from_entry(filename.clone(), entry.to_owned()))
+        .map(|entry| TickEntry::from_entry(date.clone(), entry.to_owned()))
         .collect::<Vec<TickEntry>>();
 
         Self { tick_entries }

@@ -1,7 +1,3 @@
 mod files;
-mod entryFile;
 
-pub use {
-    entryFile::*,
-    files::*,
-};
+pub use files::*;

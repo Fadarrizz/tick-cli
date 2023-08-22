@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::PathBuf};
 use serde::{Serialize, Deserialize, de::DeserializeOwned};
 use crate::files;
 
@@ -35,7 +35,7 @@ pub struct Cache<T> {
 
 impl<T: DeserializeOwned + Serialize + Clone> Cache<T> {
     pub fn new() -> Self {
-        let map = match files::read_from_cache(&FILENAME.to_string()) {
+        let map = match files::read_from_cache(&get_path()) {
             Ok(content) => serde_json::from_str(&content).unwrap_or_else(|_| HashMap::new()), 
             Err(_) => HashMap::new()
         };
@@ -51,8 +51,12 @@ impl<T: DeserializeOwned + Serialize + Clone> Cache<T> {
         self.map.insert(key, cached_response);
 
         files::write_to_cache(
-            &FILENAME.to_string(),
+            &get_path(),
             serde_json::to_string(&self.map).unwrap(),
         ).expect("Failed to write to cache file");
     }
+}
+
+fn get_path() -> PathBuf {
+    files::get_cache_file_path(None, Some(&FILENAME.to_string()))
 }

@@ -1,11 +1,11 @@
-use crate::{api, config::Config, http::HttpError, repository, ui};
+use crate::{api, config::Config, http::HttpError, repository, ui, files};
 use chrono::NaiveTime;
-use std::process;
+use std::{process, path::PathBuf};
 use tick_cli::{Entry, EntryList, TickEntry, TickEntryList};
 
 pub fn submit(config: &Config) -> std::io::Result<()> {
-    let filename = ui::select_file();
-    let mut entries = repository::load_entry_list(&filename).expect("Cannot load entries");
+    let path = ui::select_file();
+    let mut entries = repository::load_entry_list(&path).expect("Cannot load entries");
 
     if entries.all_submitted() {
         println!("Everything up-to-date");
@@ -20,8 +20,11 @@ pub fn submit(config: &Config) -> std::io::Result<()> {
 
     submit_entries(
         config,
-        &filename,
-        &TickEntryList::from_entry_list(&filename, &entries),
+        &path,
+        &TickEntryList::from_entry_list(
+            &files::get_filename_from_path(&path).unwrap(),
+            &entries,
+        ),
     );
 
     Ok(())
@@ -54,7 +57,7 @@ fn confirm_submit() -> Option<bool> {
     ui::confirm("Are you sure you want to submit these entries?")
 }
 
-fn submit_entries(config: &Config, filename: &String, tick_entries: &TickEntryList) {
+fn submit_entries(config: &Config, path: &PathBuf, tick_entries: &TickEntryList) {
     let mut entries = EntryList::empty();
     let mut errors = Vec::new();
     let mut submitted_count = 0;
@@ -90,7 +93,7 @@ fn submit_entries(config: &Config, filename: &String, tick_entries: &TickEntryLi
         entries.set_all_submitted(true);
     }
 
-    repository::store_entry_list(entries, &filename).expect("Unable to store entry list");
+    repository::store_entry_list(&entries, &path).expect("Unable to store entry list");
 
     if !errors.is_empty() {
         for (entry, message) in errors {

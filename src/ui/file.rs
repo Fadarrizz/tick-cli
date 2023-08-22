@@ -8,19 +8,19 @@ pub fn select_file() -> PathBuf {
 
     // Year
     path = files::get_document_file_path(
-        Some(path),
+        Some(&path),
         Some(&select(files::get_file_names(&path), "Select year")),
     );
 
     // Month
     path = files::get_document_file_path(
-        Some(path),
+        Some(&path),
         Some(&select(files::get_file_names(&path), "Select month")),
     );
 
     // File
     path = files::get_document_file_path(
-        Some(path),
+        Some(&path),
         Some(&select(files::get_file_names(&path), "Select date")),
     );
 

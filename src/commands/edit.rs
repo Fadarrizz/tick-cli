@@ -4,8 +4,8 @@ use tick_cli::{Entry, EntryList, Project, Task};
 use crate::{api, config::Config, repository, ui};
 
 pub fn edit_entry(config: &Config) -> std::io::Result<()> {
-    let filename = ui::select_file();
-    let mut entries: EntryList = repository::load_entry_list(&filename).expect("Cannot load entries");
+    let path = ui::select_file();
+    let mut entries: EntryList = repository::load_entry_list(&path).expect("Cannot load entries");
 
     let entry = select_entry(&mut entries).unwrap();
 
@@ -48,7 +48,7 @@ pub fn edit_entry(config: &Config) -> std::io::Result<()> {
     entries.sort();
     entries.set_all_submitted(false);
 
-    repository::store_entry_list(entries, &filename).expect("Cannot store entry list");
+    repository::store_entry_list(&entries, &path).expect("Cannot store entry list");
 
     Ok(())
 }

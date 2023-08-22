@@ -1,8 +1,8 @@
+use dirs;
 use std::fs;
 use std::io::ErrorKind;
-use std::result::Result;
 use std::path::PathBuf;
-use dirs;
+use std::result::Result;
 
 const BASE_DIR: &str = "Tick";
 
@@ -13,7 +13,7 @@ pub enum FileError {
 }
 
 impl FileError {
-    fn new(message: &str) -> Self {
+    fn new(message: &'static str) -> Self {
         FileError::FileError(message)
     }
 }
@@ -74,8 +74,8 @@ pub fn write_to_cache(path: &PathBuf, content: String) -> Result<(), FileError> 
     write(path, content)
 }
 
-pub fn delete_documents(path: PathBuf) -> Result<(), FileError> {
-    if !ensure_path_has_base(&Dir::Document, &path) {
+pub fn delete_documents(path: &PathBuf) -> Result<(), FileError> {
+    if !ensure_path_has_base(&Dir::Document, path) {
         return Err(FileError::new("Path doesn't start with document dir"));
     }
 
@@ -87,17 +87,21 @@ fn read(file: &PathBuf) -> Result<String, FileError> {
 }
 
 fn write(path: &PathBuf, content: String) -> Result<(), FileError> {
-    ensure_path_exists(&path).is_ok();
+    ensure_path_exists(path);
 
     fs::write(path, content).map_err(FileError::from)
 }
 
-fn delete(path: PathBuf) -> Result<(), FileError> {
+fn delete(path: &PathBuf) -> Result<(), FileError> {
     fs::remove_file(path).map_err(FileError::from)
 }
 
-pub fn get_document_file_path(path: Option<PathBuf>, child: Option<&String>) -> PathBuf {
+pub fn get_document_file_path(path: Option<&PathBuf>, child: Option<&String>) -> PathBuf {
     get_file_path(Some(&Dir::Document), path, child).unwrap()
+}
+
+pub fn get_cache_file_path(path: Option<&PathBuf>, child: Option<&String>) -> PathBuf {
+    get_file_path(Some(&Dir::Cache), path, child).unwrap()
 }
 
 pub fn get_file_names(path: &PathBuf) -> Vec<String> {
@@ -117,44 +121,55 @@ pub fn get_file_names(path: &PathBuf) -> Vec<String> {
     file_names
 }
 
-fn get_file_path(dir: Option<&Dir>, path: Option<PathBuf>, child: Option<&String>) -> Result<PathBuf, &'static str> {
-    let mut path_buf;
+pub fn get_document_file_path_from(filename: &String) -> Result<PathBuf, &'static str> {
+    match get_file_path(Some(&Dir::Document), None, None) {
+        Err(err) => Err(err),
+        Ok(mut path_buf) => {
+            path_buf.push(PathBuf::from(filename));
+            Ok(path_buf)
+        }
+    }
+}
 
+pub fn get_filename_from_path(path: &PathBuf) -> Option<String> {
+    path.file_stem()
+        .and_then(|s| s.to_str().map(|s| String::from(s)))
+}
+
+fn get_file_path(
+    dir: Option<&Dir>,
+    path: Option<&PathBuf>,
+    child: Option<&String>,
+) -> Result<PathBuf, &'static str> {
     match (dir, path) {
         (Some(dir), None) => {
-            path_buf = dir.base();
-            Ok(())
-        },
-        (None, Some(path)) => {
-            path_buf = path;
-            Ok(())
-        },
-        (Some(dir), Some(path)) => {
-            path_buf = path;
-            Ok(())
-        },
+            Ok(dir.base())
+        }
+        (None, Some(path)) | (Some(_), Some(path)) => {
+            let mut path_buf = path.to_path_buf();
+
+            if let Some(child) = child {
+                path_buf.push(child);
+            }
+
+            if path.is_file() {
+                path_buf.set_extension("json");
+            }
+
+            Ok(path_buf)
+        }
         (None, None) => Err("Either dir or path should be provided"),
-    };
-
-    if let Some(child) = child {
-        path_buf.push(child);
     }
-
-    if path_buf.as_path().is_file() {
-        path_buf.set_extension("json");
-    }
-
-    Ok(path_buf)
 }
 
 fn ensure_path_has_base(dir: &Dir, path: &PathBuf) -> bool {
     path.as_path().starts_with(dir.base())
 }
 
-fn ensure_path_exists(path: &PathBuf) -> Result<(), FileError> {
+fn ensure_path_exists(path: &PathBuf) {
     match fs::create_dir(path) {
-        Ok(()) => Ok(()),
-        Err(e) if e.kind() == ErrorKind::AlreadyExists => Ok(()),
+        Ok(()) => (),
+        Err(e) if e.kind() == ErrorKind::AlreadyExists => (),
         Err(_) => panic!("Cannot create base dir"),
     }
 }
