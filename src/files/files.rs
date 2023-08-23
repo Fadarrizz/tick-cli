@@ -152,10 +152,6 @@ fn get_file_path(
                 path_buf.push(child);
             }
 
-            if path.is_file() {
-                path_buf.set_extension("json");
-            }
-
             Ok(path_buf)
         }
         (None, None) => Err("Either dir or path should be provided"),

@@ -24,6 +24,8 @@ pub fn select_file() -> PathBuf {
         Some(&select(files::get_file_names(&path), "Select date")),
     );
 
+    path.set_extension("json");
+
     path
 }
 
