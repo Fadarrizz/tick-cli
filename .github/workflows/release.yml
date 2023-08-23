@@ -27,8 +27,9 @@ jobs:
         run: gh release create ${{ env.TC_VERSION }}
         
   build-release:
+    name: build-release
     needs: ['create-release']
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         build: [macos]
@@ -64,7 +65,7 @@ jobs:
         tar czf "$staging.tar.gz" "$staging"
         shasum -a 265 "$staging.tar.gz" > "$staging.tar.gz.sha265"
         echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
-        echo "ASSET_SU$staging.tar.gz.sha265" >> $GITHUB_ENV
+        echo "ASSET_SUM=$staging.tar.gz.sha265" >> $GITHUB_ENV
 
     - name: Upload release archive
       env:
