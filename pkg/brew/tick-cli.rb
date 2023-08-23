@@ -1,3 +1,6 @@
+require "formula"
+require "custom_download_strategy.rb"
+
 class TickCli < Formula
   version "0.1.2"
   desc "A CLI tool for managing Tickspot entries"
