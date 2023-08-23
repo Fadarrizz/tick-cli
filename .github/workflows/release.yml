@@ -1,0 +1,72 @@
+name: release
+
+on:
+  push:
+    tags:
+    - "[0-9]+.[0-9]+.[0-9]+"
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      tc_version: ${{ env.TC_VERSION }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Get the release from the tag
+        shell: bash
+        if: env.TC_VERSION == ''
+        run: |
+          echo "TC_VERSION=$GITHUB_REF_NAME" >> $GITHUB_ENV
+          echo "version is: ${{ env.TC_VERSION }}"
+      - name: Create Github release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create ${{ env.TC_VERSION }}
+        
+  build-release:
+    needs: ['create-release']
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build: [macos]
+        include:
+        - build: macos
+          os: macos-latest
+          rust: stable
+          target: x86_64-apple-darwin
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@master
+      with:
+        toolchain: ${{ matrix.rust }}
+        target: ${{ matrix.target }}
+    
+    - name: Build release binary
+      run: cargo build --verbose --release --target ${{ matrix.target }}
+      
+    - name: Strip release binary
+      if: matrix.os == 'macos'
+      run: strip "target/${{ matrix.target }}/release/tick-cli"
+      
+    - name: Build archive
+      shell: bash
+      run: |
+        staging="tick-cli-${{ needs.create-release.outputs.tc_version }}-${{ matrix.target }}"
+
+        cp "target/${{ matrix.target }}/release/tick-cli" "$staging/"
+        tar czf "$staging.tar.gz" "$staging"
+        shasum -a 265 "$staging.tar.gz" > "$staging.tar.gz.sha265"
+        echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
+        echo "ASSET_SU$staging.tar.gz.sha265" >> $GITHUB_ENV
+
+    - name: Upload release archive
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release upload ${{ needs.create-release.outputs.tc_version }} ${{ env.ASSET }} ${{ env.ASSET_SUM }}
