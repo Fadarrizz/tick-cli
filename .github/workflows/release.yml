@@ -23,7 +23,7 @@ jobs:
           echo "version is: ${{ env.TC_VERSION }}"
       - name: Create Github release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create ${{ env.TC_VERSION }}
         
   build-release:
@@ -69,5 +69,5 @@ jobs:
 
     - name: Upload release archive
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: gh release upload ${{ needs.create-release.outputs.tc_version }} ${{ env.ASSET }} ${{ env.ASSET_SUM }}
