@@ -65,9 +65,9 @@ jobs:
 
         cp "target/${{ matrix.target }}/release/tick-cli" "$staging/"
         tar czf "$staging.tar.gz" "$staging"
-        shasum -a 265 "$staging.tar.gz" > "$staging.tar.gz.sha265"
+        shasum -a 256 "$staging.tar.gz" > "$staging.tar.gz.sha256"
         echo "ASSET=$staging.tar.gz" >> $GITHUB_ENV
-        echo "ASSET_SUM=$staging.tar.gz.sha265" >> $GITHUB_ENV
+        echo "ASSET_SUM=$staging.tar.gz.sha256" >> $GITHUB_ENV
 
     - name: Upload release archive
       env:
