@@ -122,10 +122,14 @@ pub fn get_file_names(path: &PathBuf) -> Vec<String> {
 }
 
 pub fn get_document_file_path_from(filename: &String) -> Result<PathBuf, &'static str> {
-    match get_file_path(Some(&Dir::Document), None, None) {
+    let splitted = filename.split('-').collect::<Vec<&str>>();
+    let path: PathBuf = splitted[..2].iter().collect();
+
+    match get_file_path(Some(&Dir::Document), Some(&path), None) {
         Err(err) => Err(err),
         Ok(mut path_buf) => {
             path_buf.push(PathBuf::from(filename));
+            path_buf.set_extension("json");
             Ok(path_buf)
         }
     }
@@ -141,20 +145,26 @@ fn get_file_path(
     path: Option<&PathBuf>,
     child: Option<&String>,
 ) -> Result<PathBuf, &'static str> {
-    match (dir, path) {
-        (Some(dir), None) => {
-            Ok(dir.base())
-        }
-        (None, Some(path)) | (Some(_), Some(path)) => {
-            let mut path_buf = path.to_path_buf();
+    let path_result = match (dir, path) {
+        (Some(dir), None) => Ok(dir.base()),
+        (None, Some(path)) => Ok(path.to_path_buf()),
+        (Some(dir), Some(path)) => {
+            let mut _path = dir.base();
+            _path.push(path);
+            Ok(_path)
+        },
+        (None, None) => Err("Either dir or path should be provided")
+    };
 
+    match path_result {
+        Err(err) => Err(err),
+        Ok(mut path) => {
             if let Some(child) = child {
-                path_buf.push(child);
+                path.push(child);
             }
 
-            Ok(path_buf)
+            Ok(path)
         }
-        (None, None) => Err("Either dir or path should be provided"),
     }
 }
 
@@ -163,9 +173,11 @@ fn ensure_path_has_base(dir: &Dir, path: &PathBuf) -> bool {
 }
 
 fn ensure_path_exists(path: &PathBuf) {
-    match fs::create_dir(path) {
-        Ok(()) => (),
-        Err(e) if e.kind() == ErrorKind::AlreadyExists => (),
-        Err(_) => panic!("Cannot create base dir"),
-    }
+    if let Some(parent) = path.parent() {
+        match fs::create_dir_all(parent) {
+            Ok(()) => (),
+            Err(e) if e.kind() == ErrorKind::AlreadyExists => (),
+            Err(_) => panic!("Cannot create base dir"),
+        }
+    } 
 }
