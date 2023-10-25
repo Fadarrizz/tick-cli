@@ -32,6 +32,7 @@ fn try_main(args: Args) -> Result<()> {
         Edit => edit(&config),
         Submit => submit(&config),
         Delete => delete(&config),
+        Move => move(&config),
     }?;
 
     if matched {
@@ -79,3 +80,8 @@ fn delete(config: &Config) -> Result<bool> {
     Ok(commands::delete_entry(config).is_ok())
 }
 
+fn move(config: &Config) -> Result<bool> {
+    commands::check_auth(config);
+
+    Ok(commands::move_entry().is_ok())
+}

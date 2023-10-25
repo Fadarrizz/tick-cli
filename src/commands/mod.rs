@@ -4,6 +4,7 @@ mod list;
 mod edit;
 mod submit;
 mod delete;
+mod mv;
 
 pub use {
     add::*,
@@ -11,5 +12,6 @@ pub use {
     list::*,
     edit::*,
     submit::*,
-    delete::*
+    delete::*,
+    mv::*,
 };
